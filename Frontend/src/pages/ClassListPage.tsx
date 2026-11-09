@@ -81,14 +81,20 @@ export const ClassListPage: React.FC = () => {
 
       // Class dropdown filter
       if (classFilter !== 'ALL') {
-        // e.g. "Class 6"
-        if (!c.name.toLowerCase().includes(classFilter.toLowerCase())) return false;
+        // e.g. "Class 6" (word boundary prevents "Class 1" from matching "Class 10")
+        if (!new RegExp(`\\b${classFilter}\\b`, 'i').test(c.name)) return false;
       }
 
       // Shift dropdown filter
       if (shiftFilter !== 'ALL') {
-        const isMorning = c.name.toLowerCase().includes('morning') || c.name.includes('প্রভাত');
-        const isDay = c.name.toLowerCase().includes('day') || c.name.includes('দিবা');
+        const isMorning =
+          c.shift?.toLowerCase() === 'morning' ||
+          c.name.toLowerCase().includes('morning') ||
+          c.name.includes('প্রভাত');
+        const isDay =
+          c.shift?.toLowerCase() === 'day' ||
+          c.name.toLowerCase().includes('day') ||
+          c.name.includes('দিবা');
         if (shiftFilter === 'Morning' && !isMorning) return false;
         if (shiftFilter === 'Day' && !isDay) return false;
       }
@@ -354,7 +360,7 @@ export const ClassListPage: React.FC = () => {
               }`}
             >
               {t.filterTabEmpty} (
-              {language === 'bn' ? toBengaliNumerals(tabCounts.empty) : tabCounts.empty}
+              {language === 'bn' ? toBengaliNumerals(tabCounts.empty) : tabCounts.empty})
             </button>
             <button
               onClick={() => setActiveTab('FULL')}
@@ -414,9 +420,13 @@ export const ClassListPage: React.FC = () => {
                 filteredClasses.map((c) => {
                   const condition = getClassCondition(c);
                   const isMorning =
-                    c.name.toLowerCase().includes('morning') || c.name.includes('প্রভাত');
+                    c.shift?.toLowerCase() === 'morning' ||
+                    c.name.toLowerCase().includes('morning') ||
+                    c.name.includes('প্রভাত');
                   const isDay =
-                    c.name.toLowerCase().includes('day') || c.name.includes('দিবা');
+                    c.shift?.toLowerCase() === 'day' ||
+                    c.name.toLowerCase().includes('day') ||
+                    c.name.includes('দিবা');
                   const shiftDisplay = isMorning
                     ? t.shiftMorning
                     : isDay

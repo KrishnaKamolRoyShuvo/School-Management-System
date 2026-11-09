@@ -93,12 +93,18 @@ export const AdminPortalPage: React.FC = () => {
       }
 
       if (classFilter !== 'ALL') {
-        if (!c.name.toLowerCase().includes(classFilter.toLowerCase())) return false;
+        if (!new RegExp(`\\b${classFilter}\\b`, 'i').test(c.name)) return false;
       }
 
       if (shiftFilter !== 'ALL') {
-        const isMorning = c.name.toLowerCase().includes('morning') || c.name.includes('প্রভাত');
-        const isDay = c.name.toLowerCase().includes('day') || c.name.includes('দিবা');
+        const isMorning =
+          c.shift?.toLowerCase() === 'morning' ||
+          c.name.toLowerCase().includes('morning') ||
+          c.name.includes('প্রভাত');
+        const isDay =
+          c.shift?.toLowerCase() === 'day' ||
+          c.name.toLowerCase().includes('day') ||
+          c.name.includes('দিবা');
         if (shiftFilter === 'Morning' && !isMorning) return false;
         if (shiftFilter === 'Day' && !isDay) return false;
       }
@@ -431,9 +437,13 @@ export const AdminPortalPage: React.FC = () => {
                     filteredClasses.map((c) => {
                       const condition = getClassCondition(c);
                       const isMorning =
-                        c.name.toLowerCase().includes('morning') || c.name.includes('প্রভাত');
+                        c.shift?.toLowerCase() === 'morning' ||
+                        c.name.toLowerCase().includes('morning') ||
+                        c.name.includes('প্রভাত');
                       const isDay =
-                        c.name.toLowerCase().includes('day') || c.name.includes('দিবা');
+                        c.shift?.toLowerCase() === 'day' ||
+                        c.name.toLowerCase().includes('day') ||
+                        c.name.includes('দিবা');
                       const shiftDisplay = isMorning
                         ? t.shiftMorning
                         : isDay

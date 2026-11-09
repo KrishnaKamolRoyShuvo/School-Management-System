@@ -129,7 +129,7 @@ export const translations = {
     
     // BCN Banner
     bcnPromptLabel: "শিক্ষার্থীর জন্ম নিবন্ধন নম্বর (BCN)",
-    bcnPlaceholder: "১৭ ডিজিটের জন্ম নিবন্ধন নম্বর লিখুন (যেমন: ২০১০১২৩৪৫৬৭৮৯০১Link)",
+    bcnPlaceholder: "১৭ ডিজিটের জন্ম নিবন্ধন নম্বর লিখুন (যেমন: ২০১০১২৩৪৫৬৭৮৯০১২৩)",
     setBcn: "দাখিল করুন",
     changeBcn: "নম্বর পরিবর্তন",
     clearBcn: "মুছুন",

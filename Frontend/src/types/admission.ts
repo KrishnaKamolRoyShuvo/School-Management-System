@@ -1,6 +1,7 @@
 export interface SchoolClassDto {
   id: string;
   name: string;
+  shift?: string;
   totalSeats: number;
   heldSeats: number;
   confirmedSeats: number;

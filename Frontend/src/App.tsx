@@ -10,7 +10,7 @@ import { AdminPortalPage } from './pages/AdminPortalPage';
 export const App: React.FC = () => {
   return (
     <AdmissionProvider>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 font-sans">
           <Navbar />
           <main className="flex-1">

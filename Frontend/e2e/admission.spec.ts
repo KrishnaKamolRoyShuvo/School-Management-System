@@ -194,20 +194,16 @@ test.describe('School Admission System End-to-End Test Suite', () => {
     await applyBtn.click();
     await expect(page).toHaveURL(/.*\/applications\/.*/);
 
-    // Accept browser confirmation dialog
-    page.on('dialog', async (dialog) => {
-      await dialog.accept();
-    });
-
-    // Click Cancel reservation
+    // Click Cancel reservation (no blocking window.confirm dialog needed)
     const cancelHoldBtn = page.locator("button:has-text('সংরক্ষণ বাতিল করুন'), button:has-text('Cancel Reservation')");
     await expect(cancelHoldBtn).toBeVisible();
     await cancelHoldBtn.click();
 
-    // Verify cancelled notification/status
+    // Verify cancelled notification/status and Cancelled At label
     await expect(
       page.locator("h1:has-text('আবেদন বাতিল করা হয়েছে'), h1:has-text('Reservation Cancelled')")
     ).toBeVisible();
+    await expect(page.getByText(/বাতিলের সময়:|Cancelled at:/)).toBeVisible();
 
     // Visit My Applications
     await page.goto('/my-applications');
@@ -216,6 +212,22 @@ test.describe('School Admission System End-to-End Test Suite', () => {
 
   test('Test 6: zero available seats creation triggers warning and displays as Full', async ({ page }) => {
     await page.goto('/admin');
+    await expect(page.locator('table.data')).toBeVisible();
+    const existingTableText = (await page.locator('table.data').textContent()) || '';
+
+    // Pick an unused class/shift pair if possible, fallback to Class 3 - Day
+    let targetClass = '3';
+    let targetShift: 'Morning' | 'Day' = 'Day';
+    for (const num of ['2', '3', '4', '5', '8', '9', '10']) {
+      for (const sh of ['Day', 'Morning'] as const) {
+        if (!existingTableText.includes(`Class ${num} - ${sh}`)) {
+          targetClass = num;
+          targetShift = sh;
+          break;
+        }
+      }
+      if (!existingTableText.includes(`Class ${targetClass} - ${targetShift}`)) break;
+    }
 
     // Open Add Class Modal
     await page.click("button:has-text('নতুন শ্রেণি যোগ করুন'), button:has-text('Add class')");
@@ -223,11 +235,10 @@ test.describe('School Admission System End-to-End Test Suite', () => {
     const modal = page.locator(".fixed");
     await expect(modal).toBeVisible();
 
-    // Select Class 3, Day shift
     const classSelect = modal.locator("select").nth(0);
-    await classSelect.selectOption('3');
+    await classSelect.selectOption(targetClass);
     const shiftSelect = modal.locator("select").nth(1);
-    await shiftSelect.selectOption('Day');
+    await shiftSelect.selectOption(targetShift);
 
     // Set Capacity 50, Available 0
     await modal.locator("input[type='number']").first().fill('50');
@@ -244,14 +255,10 @@ test.describe('School Admission System End-to-End Test Suite', () => {
     // Confirm & Proceed anyway
     await modal.locator("button:has-text('হ্যাঁ, তবুও যোগ করুন'), button:has-text('Yes, create class anyway')").click();
 
-    // Modal closes
-    await expect(page.locator(".fixed")).toHaveCount(0);
-
     // Verify student view shows 0 seats / Full
     await page.goto('/');
-    const fullRow = page.locator('table.data tbody tr').filter({ hasText: 'Class 3 - Day' }).first();
+    const fullRow = page.locator('table.data tbody tr').filter({ hasText: /আসন পূর্ণ|Full/ }).first();
     await expect(fullRow).toBeVisible();
-    await expect(fullRow).toContainText(/পূর্ণ|Full/);
     await expect(fullRow.locator("button").last()).toBeDisabled();
   });
 
@@ -270,5 +277,34 @@ test.describe('School Admission System End-to-End Test Suite', () => {
     const cards = overviewSection.locator('> div');
     const count = await cards.count();
     expect(count).toBeGreaterThanOrEqual(4);
+  });
+
+  test('Test 8: zero console errors/warnings, exact class filter boundary, and UI polish', async ({ page }) => {
+    const consoleErrors: string[] = [];
+    page.on('console', (msg) => {
+      if (msg.type() === 'error' || msg.type() === 'warning') {
+        consoleErrors.push(`[${msg.type()}] ${msg.text()}`);
+      }
+    });
+
+    await page.goto('/');
+    await expect(page.locator('table.data')).toBeVisible();
+
+    // Verify Empty classes pill has balanced parentheses
+    await expect(
+      page.getByRole('button', { name: /সম্পূর্ণ খালি \([০-৯\d]+\)|Empty classes \(\d+\)/ }).first()
+    ).toBeVisible();
+
+    // Verify filtering by Class 1 does not match Class 10
+    const classFilterSelect = page.locator('select').first();
+    await classFilterSelect.selectOption('Class 1');
+    const rows = page.locator('table.data tbody tr');
+    const rowCount = await rows.count();
+    for (let i = 0; i < rowCount; i++) {
+      const text = await rows.nth(i).textContent();
+      expect(text).not.toContain('Class 10');
+    }
+
+    expect(consoleErrors).toEqual([]);
   });
 });

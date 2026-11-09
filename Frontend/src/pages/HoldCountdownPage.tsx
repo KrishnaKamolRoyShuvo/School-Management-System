@@ -83,18 +83,19 @@ export const HoldCountdownPage: React.FC = () => {
 
   // Confirm hold handler
   const handleConfirm = async () => {
-    if (!hold || !bcn) return;
+    const studentIdToUse = bcn || hold?.studentId;
+    if (!hold || !studentIdToUse) return;
     setActionLoading(true);
     setErrorMsg(null);
 
     try {
-      const res = await api.confirmHold(hold.holdId, bcn);
+      const res = await api.confirmHold(hold.holdId, studentIdToUse);
       setHold((prev) =>
         prev
           ? {
               ...prev,
               status: 'CONFIRMED',
-              confirmedAt: res.confirmedAt,
+              confirmedAt: res.confirmedAt || new Date().toISOString(),
             }
           : null
       );
@@ -120,19 +121,23 @@ export const HoldCountdownPage: React.FC = () => {
 
   // Cancel hold handler
   const handleCancel = async () => {
-    if (!hold || !bcn) return;
-    const confirmPrompt =
-      language === 'bn'
-        ? 'আপনি কি নিশ্চিত যে এই সাময়িক আসন সংরক্ষণ বাতিল করতে চান?'
-        : 'Are you sure you want to cancel this temporary seat reservation?';
-    if (!window.confirm(confirmPrompt)) return;
+    const studentIdToUse = bcn || hold?.studentId;
+    if (!hold || !studentIdToUse) return;
 
     setActionLoading(true);
     setErrorMsg(null);
 
     try {
-      await api.cancelHold(hold.holdId, bcn);
-      setHold((prev) => (prev ? { ...prev, status: 'CANCELLED' } : null));
+      await api.cancelHold(hold.holdId, studentIdToUse);
+      setHold((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: 'CANCELLED',
+              cancelledAt: new Date().toISOString(),
+            }
+          : null
+      );
       broadcastSync();
       await refreshActiveHold();
     } catch (err: any) {
@@ -326,9 +331,23 @@ export const HoldCountdownPage: React.FC = () => {
           <div className="p-3.5 bg-slate-50 rounded-sm border border-slate-100 flex items-start gap-3">
             <Clock className="w-4 h-4 text-brand shrink-0 mt-0.5" />
             <div>
-              <div className="text-xs text-slate-500 font-semibold">{t.holdExpiresAt}</div>
+              <div className="text-xs text-slate-500 font-semibold">
+                {isConfirmed
+                  ? language === 'bn'
+                    ? 'নিশ্চিতকরণের সময়:'
+                    : 'Confirmed at:'
+                  : isCancelled
+                  ? language === 'bn'
+                    ? 'বাতিলের সময়:'
+                    : 'Cancelled at:'
+                  : t.holdExpiresAt}
+              </div>
               <div className="font-mono text-slate-700 mt-0.5">
-                {new Date(hold.expiresAt).toLocaleTimeString()}
+                {isConfirmed
+                  ? new Date(hold.confirmedAt || hold.createdAt).toLocaleTimeString()
+                  : isCancelled
+                  ? new Date(hold.cancelledAt || hold.createdAt).toLocaleTimeString()
+                  : new Date(hold.expiresAt).toLocaleTimeString()}
               </div>
             </div>
           </div>

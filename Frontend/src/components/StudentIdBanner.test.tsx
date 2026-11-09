@@ -7,7 +7,7 @@ import { StudentIdBanner } from './StudentIdBanner';
 const renderWithContext = () => {
   return render(
     <AdmissionProvider>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <StudentIdBanner />
       </BrowserRouter>
     </AdmissionProvider>
