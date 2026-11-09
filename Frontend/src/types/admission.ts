@@ -42,9 +42,12 @@ export interface ConfirmHoldResponse {
 export interface AdminOverview {
   totalClasses: number;
   totalSeats: number;
-  confirmedSeats: number;
-  heldSeats: number;
-  availableSeats: number;
+  totalConfirmedSeats: number;
+  totalHeldSeats: number;
+  totalAvailableSeats: number;
+  totalActiveApplications?: number;
+  totalExpiredApplications?: number;
+  totalCancelledApplications?: number;
 }
 
 export interface ApiError {

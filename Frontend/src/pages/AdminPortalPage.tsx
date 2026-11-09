@@ -188,8 +188,8 @@ export const AdminPortalPage: React.FC = () => {
           <div className="text-2xl font-bold font-mono text-emerald-600 mt-1">
             {overview
               ? language === 'bn'
-                ? toBengaliNumerals(overview.confirmedSeats)
-                : overview.confirmedSeats
+                ? toBengaliNumerals(overview.totalConfirmedSeats ?? 0)
+                : (overview.totalConfirmedSeats ?? 0)
               : '-'}
           </div>
         </div>
@@ -199,8 +199,8 @@ export const AdminPortalPage: React.FC = () => {
           <div className="text-2xl font-bold font-mono text-amber-600 mt-1">
             {overview
               ? language === 'bn'
-                ? toBengaliNumerals(overview.heldSeats)
-                : overview.heldSeats
+                ? toBengaliNumerals(overview.totalHeldSeats ?? 0)
+                : (overview.totalHeldSeats ?? 0)
               : '-'}
           </div>
         </div>
@@ -210,8 +210,8 @@ export const AdminPortalPage: React.FC = () => {
           <div className="text-2xl font-bold font-mono text-brand mt-1">
             {overview
               ? language === 'bn'
-                ? toBengaliNumerals(overview.availableSeats)
-                : overview.availableSeats
+                ? toBengaliNumerals(overview.totalAvailableSeats ?? 0)
+                : (overview.totalAvailableSeats ?? 0)
               : '-'}
           </div>
         </div>
