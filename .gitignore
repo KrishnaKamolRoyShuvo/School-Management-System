@@ -1,0 +1,38 @@
+# Confidential Assignment PDFs (NEVER COMMIT)
+*.pdf
+*.PDF
+requirements.pdf
+
+# Static prototype (local reference only)
+PototypeHtml/
+
+# Environment files with local secrets
+.env
+.env.local
+.env.*.local
+
+# .NET / C#
+bin/
+obj/
+out/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+TestResults/
+
+# Node / Frontend
+node_modules/
+dist/
+dist-ssr/
+coverage/
+*.log
+npm-debug.log*
+playwright-report/
+test-results/
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.idea/
