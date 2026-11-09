@@ -1,0 +1,253 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background: #f8fafc;
+  color: #0f172a;
+  font-family: "Source Sans 3", "Anek Bangla", ui-sans-serif, system-ui, sans-serif;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: #0f172a;
+}
+
+.page-subtitle {
+  font-size: 0.98rem;
+  line-height: 1.55;
+  color: #475569;
+}
+
+.section-title {
+  font-size: 1.02rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.block-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.field-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  white-space: nowrap;
+  border-radius: 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  height: 2.25rem;
+  padding: 0 0.875rem;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(15, 82, 186, 0.25);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-default {
+  background: #0f52ba;
+  color: #fff;
+}
+.btn-default:hover:not(:disabled) {
+  background: #0a3d8f;
+}
+
+.btn-outline {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #334155;
+}
+.btn-outline:hover:not(:disabled) {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.btn-secondary {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+.btn-secondary:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.btn-destructive {
+  background: #dc2626;
+  color: #fff;
+}
+.btn-destructive:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.btn-sm {
+  height: 2rem;
+  padding: 0 0.75rem;
+}
+
+.btn-lg {
+  height: 2.625rem;
+  padding: 0 1.125rem;
+  font-size: 0.85rem;
+}
+
+.input {
+  width: 100%;
+  height: 2.25rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.25rem;
+  padding: 0 0.75rem;
+  font-size: 0.85rem;
+  background: #fff;
+  color: #0f172a;
+}
+.input:focus {
+  outline: none;
+  border-color: #0f52ba;
+  box-shadow: 0 0 0 2px rgba(15, 82, 186, 0.15);
+}
+
+.panel {
+  background: #fff;
+  border-radius: 0.25rem;
+  border: 1px solid #e2e8f0;
+}
+
+table.data {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.84rem;
+}
+
+table.data th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  background: #f8fafc;
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+table.data td {
+  text-align: left;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+table.data tbody tr:hover td {
+  background: #f8fafc;
+}
+
+.id-chip {
+  font-family: "Roboto Mono", monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: #334155;
+  background: #f1f5f9;
+  padding: 0.125rem 0.45rem;
+  border-radius: 0.125rem;
+  border: 1px solid #e2e8f0;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.status-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.125rem;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  display: inline-block;
+  text-align: center;
+}
+
+.status-open {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.status-almost-full {
+  background: #fffbeb;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
+.status-empty {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+.status-full {
+  background: #f1f5f9;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+
+.status-confirmed {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.status-held {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+.status-expired {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.status-cancelled {
+  background: #f8fafc;
+  color: #64748b;
+  border-color: #e2e8f0;
+}
