@@ -9,7 +9,9 @@ export interface SchoolClassDto {
 
 export interface CreateClassRequest {
   name: string;
+  shift?: string;
   totalSeats: number;
+  availableSeats?: number;
 }
 
 export interface CreateClassResponse {

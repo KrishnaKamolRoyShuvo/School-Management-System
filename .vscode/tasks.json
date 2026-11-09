@@ -1,0 +1,38 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start PostgreSQL",
+      "type": "shell",
+      "command": "docker start school-admission-postgres || docker run -d --name school-admission-postgres -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=school_admission postgres:16-alpine",
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Backend (.NET 10)",
+      "type": "shell",
+      "command": "dotnet run --project backend/SchoolAdmission.Api --urls http://localhost:8080",
+      "isBackground": true,
+      "problemMatcher": "$msCompile",
+      "dependsOn": "Start PostgreSQL"
+    },
+    {
+      "label": "Start Frontend (Vite)",
+      "type": "shell",
+      "command": "cd Frontend && npm run dev",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Whole Project",
+      "dependsOn": [
+        "Start Backend (.NET 10)",
+        "Start Frontend (Vite)"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}

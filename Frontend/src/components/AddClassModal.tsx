@@ -56,7 +56,9 @@ export const AddClassModal: React.FC<AddClassModalProps> = ({ isOpen, onClose, o
       const classNameStr = `Class ${selectedClassNum} - ${selectedShift}`;
       await api.createClass({
         name: classNameStr,
+        shift: selectedShift,
         totalSeats: Number(totalSeats),
+        availableSeats: Number(availableSeats),
       });
 
       broadcastSync();
