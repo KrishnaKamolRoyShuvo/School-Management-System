@@ -3,13 +3,19 @@ using SchoolAdmission.Api.BackgroundServices;
 using SchoolAdmission.Api.Data;
 using SchoolAdmission.Api.Services;
 
+// ============================================================================
+// Application Entry Point & Dependency Injection Configuration
+// Configures controllers, PostgreSQL database context, background workers,
+// CORS policies, and automatic schema initialization on startup.
+// ============================================================================
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Controllers
+// Register REST API controllers and OpenAPI specification support
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
-// Connection String Resolution
+// Resolve PostgreSQL connection string from DATABASE_URL or appsettings.json
 var connectionString = GetPostgresConnectionString(builder.Configuration);
 
 builder.Services.AddDbContext<AdmissionDbContext>(options =>
@@ -17,11 +23,11 @@ builder.Services.AddDbContext<AdmissionDbContext>(options =>
     options.UseNpgsql(connectionString);
 });
 
-// Domain Services & Background Workers
+// Register core domain services and background expiration worker
 builder.Services.AddScoped<IAdmissionService, AdmissionService>();
 builder.Services.AddHostedService<HoldExpirationBackgroundService>();
 
-// CORS
+// Configure permissive CORS for local development and containerized frontend access
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
@@ -35,7 +41,8 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Auto-migrate / Ensure database schema exists on startup with retry
+// Automatically verify and create the PostgreSQL schema on startup with retry logic
+// (Skipped in "Testing" environment where TestWebApplicationFactory manages schema lifecycle)
 if (app.Environment.EnvironmentName != "Testing")
 {
     using var scope = app.Services.CreateScope();
@@ -70,7 +77,12 @@ app.MapControllers();
 
 app.Run();
 
-// Helper to convert standard database URL / environment variable
+/// <summary>
+/// Resolves a valid Npgsql connection string from either the <c>DATABASE_URL</c> environment variable
+/// (supporting <c>postgres://</c> URI format) or <c>ConnectionStrings:DefaultConnection</c>.
+/// </summary>
+/// <param name="configuration">The application configuration provider.</param>
+/// <returns>A formatted Npgsql key-value connection string.</returns>
 static string GetPostgresConnectionString(IConfiguration configuration)
 {
     var rawUrl = Environment.GetEnvironmentVariable("DATABASE_URL")
@@ -106,4 +118,7 @@ static string GetPostgresConnectionString(IConfiguration configuration)
     return rawUrl;
 }
 
+/// <summary>
+/// Partial Program class exposed to enable <c>WebApplicationFactory&lt;Program&gt;</c> in xUnit integration tests.
+/// </summary>
 public partial class Program { }

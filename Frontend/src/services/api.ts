@@ -1,3 +1,10 @@
+/**
+ * @file api.ts
+ * @description Centralized HTTP client for communicating with the ASP.NET Core backend API.
+ * Automatically attaches the `X-Student-Id` header when a student BCN is provided and normalizes
+ * backend error responses into typed {@link ApiException} instances.
+ */
+
 import {
   SchoolClassDto,
   CreateClassRequest,
@@ -10,6 +17,10 @@ import {
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
+/**
+ * Custom error class thrown when an HTTP request fails or returns a non-2xx status code.
+ * Carries the HTTP `statusCode` and optional structured `errorPayload` (including redirect metadata on 409 conflicts).
+ */
 export class ApiException extends Error {
   statusCode: number;
   errorPayload?: ApiError;
@@ -22,6 +33,10 @@ export class ApiException extends Error {
   }
 }
 
+/**
+ * Internal fetch wrapper that handles JSON serialization, `X-Student-Id` header injection,
+ * 204 No Content responses, and structured error extraction.
+ */
 async function request<T>(
   path: string,
   options: RequestInit = {},
@@ -71,16 +86,21 @@ async function request<T>(
   return body as T;
 }
 
+/**
+ * Public API service methods covering Class management, Student Seat Holds, and Admin Portal reporting.
+ */
 export const api = {
-  // Classes
+  /** Fetches all classes with real-time seat counts (`GET /classes`). */
   async getClasses(): Promise<SchoolClassDto[]> {
     return request<SchoolClassDto[]>('/classes');
   },
 
+  /** Fetches real-time seat inventory for a single class (`GET /classes/:classId`). */
   async getClassById(classId: string): Promise<SchoolClassDto> {
     return request<SchoolClassDto>(`/classes/${classId}`);
   },
 
+  /** Creates a new class (`POST /classes`). */
   async createClass(req: CreateClassRequest): Promise<CreateClassResponse> {
     return request<CreateClassResponse>('/classes', {
       method: 'POST',
@@ -88,7 +108,7 @@ export const api = {
     });
   },
 
-  // Holds
+  /** Places a temporary 10-minute seat hold in a class for the given 17-digit student BCN (`POST /classes/:classId/holds`). */
   async createHold(classId: string, studentId: string): Promise<HoldDto> {
     return request<HoldDto>(
       `/classes/${classId}/holds`,
@@ -97,10 +117,12 @@ export const api = {
     );
   },
 
+  /** Fetches details of a specific seat hold (`GET /holds/:holdId`). */
   async getHold(holdId: string, studentId?: string | null): Promise<HoldDto> {
     return request<HoldDto>(`/holds/${holdId}`, {}, studentId);
   },
 
+  /** Idempotently confirms an active seat hold (`POST /holds/:holdId/confirm`). */
   async confirmHold(holdId: string, studentId: string): Promise<ConfirmHoldResponse> {
     return request<ConfirmHoldResponse>(
       `/holds/${holdId}/confirm`,
@@ -109,6 +131,7 @@ export const api = {
     );
   },
 
+  /** Cancels an active seat hold and immediately releases the seat (`DELETE /holds/:holdId`). */
   async cancelHold(holdId: string, studentId: string): Promise<void> {
     return request<void>(
       `/holds/${holdId}`,
@@ -117,15 +140,17 @@ export const api = {
     );
   },
 
+  /** Retrieves all visible applications for the specified student BCN (`GET /me/holds`). */
   async getMyHolds(studentId: string): Promise<HoldDto[]> {
     return request<HoldDto[]>('/me/holds', {}, studentId);
   },
 
-  // Admin
+  /** Fetches aggregate seat and application metrics for the Admin Portal (`GET /admin/overview`). */
   async getAdminOverview(): Promise<AdminOverview> {
     return request<AdminOverview>('/admin/overview');
   },
 
+  /** Fetches all visible applications across the school for the Admin Portal (`GET /admin/holds`). */
   async getAdminHolds(status?: string): Promise<HoldDto[]> {
     const query = status ? `?status=${encodeURIComponent(status)}` : '';
     return request<HoldDto[]>(`/admin/holds${query}`);

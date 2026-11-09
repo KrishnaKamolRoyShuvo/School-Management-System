@@ -1,8 +1,21 @@
+/**
+ * @file Navbar.tsx
+ * @description Sticky top navigation bar featuring the school brand identity, links to the
+ * Admission Portal (`/`) and Application Status lookup (`/my-applications`), a bilingual toggle (`EN | বাংলা`),
+ * and a responsive mobile drawer.
+ *
+ * Security / UX note: The Administration badge is only rendered when the user is already on `/admin`
+ * and is never exposed as a navigation link on public student views.
+ */
+
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAdmission } from '../context/AdmissionContext';
 import { ShieldCheck, Search, Globe, Menu, X, School } from 'lucide-react';
 
+/**
+ * Responsive top navigation bar component.
+ */
 export const Navbar: React.FC = () => {
   const { language, setLanguage, t } = useAdmission();
   const location = useLocation();

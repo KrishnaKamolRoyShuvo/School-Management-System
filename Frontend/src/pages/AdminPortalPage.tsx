@@ -1,3 +1,15 @@
+/**
+ * @file AdminPortalPage.tsx
+ * @description School Administration Portal (`/admin`) for managing class capacities and auditing student applications.
+ *
+ * Key features:
+ * - Accessed directly via `/admin` (never linked from the public student navigation bar).
+ * - Displays 5 real-time school-wide overview metric cards (`CLASSES`, `TOTAL SEATS`, `CONFIRMED`, `HELD`, `AVAILABLE`).
+ * - Tab 1 (`Classes & Capacity`): Searchable, filterable class inventory table + `+ Add class` modal trigger.
+ * - Tab 2 (`Applications`): Real-time student application ledger with status filter (`ALL`, `HELD`, `CONFIRMED`, `EXPIRED`, `CANCELLED`)
+ *   and one-click Student BCN privacy mask toggle.
+ */
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAdmission } from '../context/AdmissionContext';
 import { api } from '../services/api';
@@ -15,6 +27,9 @@ import {
   Layers,
 } from 'lucide-react';
 
+/**
+ * Administration dashboard page (`/admin`).
+ */
 export const AdminPortalPage: React.FC = () => {
   const { t, language } = useAdmission();
 

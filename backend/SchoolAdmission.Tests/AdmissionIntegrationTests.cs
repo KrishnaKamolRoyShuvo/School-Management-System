@@ -8,25 +8,39 @@ using SchoolAdmission.Api.Entities;
 
 namespace SchoolAdmission.Tests;
 
+/// <summary>
+/// End-to-end integration and concurrency test suite verifying all 17 core business requirements,
+/// including seat capacity invariants, idempotent confirmations, ownership enforcement, Section 4.8 visibility rules,
+/// 40-student high-contention seat booking, and multi-instance advisory lock serialization.
+/// </summary>
 public class AdmissionIntegrationTests : IClassFixture<TestWebApplicationFactory>, IAsyncLifetime
 {
     private readonly TestWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="AdmissionIntegrationTests"/>.
+    /// </summary>
     public AdmissionIntegrationTests(TestWebApplicationFactory factory)
     {
         _factory = factory;
         _client = factory.CreateClient();
     }
 
+    /// <summary>
+    /// Resets the PostgreSQL test database prior to each test execution.
+    /// </summary>
     public async Task InitializeAsync()
     {
         await _factory.ResetDatabaseAsync();
     }
 
+    /// <inheritdoc />
     public Task DisposeAsync() => Task.CompletedTask;
 
-    // Helper to generate unique 17-digit student IDs
+    /// <summary>
+    /// Generates a deterministic 17-digit Birth Certificate Number (BCN) for testing.
+    /// </summary>
     private static string GenerateStudentId(int suffix) => $"20150000000{suffix:D6}";
 
     private async Task<(HttpResponseMessage Response, CreateClassResponseDto? Data)> CreateClassAsync(string name, int totalSeats, string shift = "Morning", HttpClient? client = null)
@@ -120,7 +134,9 @@ public class AdmissionIntegrationTests : IClassFixture<TestWebApplicationFactory
         return (res, data);
     }
 
-    // --- TEST 1: CreateClass_ValidInput_Returns201AndPersists ---
+    /// <summary>
+    /// Verifies that creating a class with valid input returns 201 Created and initializes all seats as available.
+    /// </summary>
     [Fact]
     public async Task Test01_CreateClass_ValidInput_Returns201AndPersists()
     {
@@ -139,7 +155,9 @@ public class AdmissionIntegrationTests : IClassFixture<TestWebApplicationFactory
         Assert.Equal(0, getCls.ConfirmedSeats);
     }
 
-    // --- TEST 2: CreateClass_InvalidInputOrDuplicate_Returns4xx ---
+    /// <summary>
+    /// Verifies that invalid seat capacities return 400 Bad Request and duplicate class names return 409 Conflict.
+    /// </summary>
     [Fact]
     public async Task Test02_CreateClass_InvalidInputOrDuplicate_Returns4xx()
     {
@@ -156,7 +174,9 @@ public class AdmissionIntegrationTests : IClassFixture<TestWebApplicationFactory
         Assert.Equal(HttpStatusCode.Conflict, resDup.StatusCode);
     }
 
-    // --- TEST 3: CreateHold_WhenSeatAvailable_Returns201WithConfiguredExpiry ---
+    /// <summary>
+    /// Verifies that creating a hold decrements availableSeats by 1, increments heldSeats by 1, and sets a future expiry timestamp.
+    /// </summary>
     [Fact]
     public async Task Test03_CreateHold_WhenSeatAvailable_Returns201WithConfiguredExpiry()
     {
@@ -176,7 +196,9 @@ public class AdmissionIntegrationTests : IClassFixture<TestWebApplicationFactory
         Assert.Equal(19, status.AvailableSeats);
     }
 
-    // --- TEST 4: CreateHold_InvalidStudentIdHeader_Returns400 ---
+    /// <summary>
+    /// Verifies that missing, short, or non-numeric <c>X-Student-Id</c> headers are rejected with 400 Bad Request.
+    /// </summary>
     [Fact]
     public async Task Test04_CreateHold_InvalidStudentIdHeader_Returns400()
     {
@@ -196,7 +218,9 @@ public class AdmissionIntegrationTests : IClassFixture<TestWebApplicationFactory
         Assert.Equal(HttpStatusCode.BadRequest, resEmpty.StatusCode);
     }
 
-    // --- TEST 5: CreateHold_WhenStudentAlreadyHasHeldApplication_Returns409WithRedirectInfo ---
+    /// <summary>
+    /// Verifies that a student who already has an active <c>HELD</c> application receives 409 Conflict with <c>EXISTING_HELD_APPLICATION</c> and redirect metadata.
+    /// </summary>
     [Fact]
     public async Task Test05_CreateHold_WhenStudentAlreadyHasHeldApplication_Returns409WithRedirectInfo()
     {
@@ -218,7 +242,9 @@ public class AdmissionIntegrationTests : IClassFixture<TestWebApplicationFactory
         Assert.Equal(clsA.Id, err.ExistingClassId);
     }
 
-    // --- TEST 6: CreateHold_WhenStudentAlreadyHasConfirmedApplication_Returns409AndBlocks ---
+    /// <summary>
+    /// Verifies that a student with a <c>CONFIRMED</c> admission is permanently blocked from applying to another class with 409 Conflict (<c>EXISTING_CONFIRMED_ADMISSION</c>).
+    /// </summary>
     [Fact]
     public async Task Test06_CreateHold_WhenStudentAlreadyHasConfirmedApplication_Returns409AndBlocks()
     {
@@ -237,7 +263,9 @@ public class AdmissionIntegrationTests : IClassFixture<TestWebApplicationFactory
         Assert.Equal("EXISTING_CONFIRMED_ADMISSION", err!.Code);
     }
 
-    // --- TEST 7: ConfirmHold_ValidUnexpiredHold_TransitionsToConfirmedAndUpdatesSeatCounts ---
+    /// <summary>
+    /// Verifies that confirming an active hold transitions its status to <c>CONFIRMED</c> and moves 1 seat from <c>heldSeats</c> to <c>confirmedSeats</c>.
+    /// </summary>
     [Fact]
     public async Task Test07_ConfirmHold_ValidUnexpiredHold_TransitionsToConfirmedAndUpdatesSeatCounts()
     {
@@ -256,7 +284,9 @@ public class AdmissionIntegrationTests : IClassFixture<TestWebApplicationFactory
         Assert.Equal(14, status.AvailableSeats);
     }
 
-    // --- TEST 8: ConfirmHold_RepeatedConfirmation_IsIdempotentAndDoesNotIncrementTwice ---
+    /// <summary>
+    /// Verifies that repeated confirmation calls for an already-confirmed hold are idempotent and do not increment <c>confirmedSeats</c> twice.
+    /// </summary>
     [Fact]
     public async Task Test08_ConfirmHold_RepeatedConfirmation_IsIdempotentAndDoesNotIncrementTwice()
     {
@@ -277,7 +307,9 @@ public class AdmissionIntegrationTests : IClassFixture<TestWebApplicationFactory
         Assert.Equal(14, status.AvailableSeats);
     }
 
-    // --- TEST 9: ConfirmHold_DifferentStudent_Returns403Forbidden ---
+    /// <summary>
+    /// Verifies that attempting to confirm another student's hold returns 403 Forbidden.
+    /// </summary>
     [Fact]
     public async Task Test09_ConfirmHold_DifferentStudent_Returns403Forbidden()
     {
@@ -291,7 +323,9 @@ public class AdmissionIntegrationTests : IClassFixture<TestWebApplicationFactory
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
     }
 
-    // --- TEST 10: ConfirmHold_WhenExpired_Returns409AndReleasesSeat ---
+    /// <summary>
+    /// Verifies that attempting to confirm an expired hold returns 409 Conflict (<c>HOLD_EXPIRED</c>) and releases the seat.
+    /// </summary>
     [Fact]
     public async Task Test10_ConfirmHold_WhenExpired_Returns409AndReleasesSeat()
     {
@@ -321,7 +355,9 @@ public class AdmissionIntegrationTests : IClassFixture<TestWebApplicationFactory
         Assert.Equal(10, status.AvailableSeats);
     }
 
-    // --- TEST 11: CancelHold_ValidHeldApplication_Returns204AndReleasesSeatImmediately ---
+    /// <summary>
+    /// Verifies that cancelling an active hold returns 204 No Content and immediately restores the seat to <c>availableSeats</c>.
+    /// </summary>
     [Fact]
     public async Task Test11_CancelHold_ValidHeldApplication_Returns204AndReleasesSeatImmediately()
     {
@@ -338,7 +374,9 @@ public class AdmissionIntegrationTests : IClassFixture<TestWebApplicationFactory
         Assert.Equal(10, status.AvailableSeats);
     }
 
-    // --- TEST 12: CancelHold_DifferentStudent_Returns403Forbidden ---
+    /// <summary>
+    /// Verifies that attempting to cancel another student's hold returns 403 Forbidden.
+    /// </summary>
     [Fact]
     public async Task Test12_CancelHold_DifferentStudent_Returns403Forbidden()
     {
@@ -352,7 +390,9 @@ public class AdmissionIntegrationTests : IClassFixture<TestWebApplicationFactory
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
     }
 
-    // --- TEST 13: CancelHold_WhenAlreadyConfirmedOrExpired_Returns409AndPreservesStatus ---
+    /// <summary>
+    /// Verifies that attempting to cancel an already-confirmed hold returns 409 Conflict and preserves the <c>CONFIRMED</c> status.
+    /// </summary>
     [Fact]
     public async Task Test13_CancelHold_WhenAlreadyConfirmedOrExpired_Returns409AndPreservesStatus()
     {
@@ -371,7 +411,9 @@ public class AdmissionIntegrationTests : IClassFixture<TestWebApplicationFactory
         Assert.Equal(HoldStatus.Confirmed, details!.Status);
     }
 
-    // --- TEST 14: Reapply_AfterExpirationOrCancellation_Succeeds ---
+    /// <summary>
+    /// Verifies that a student whose previous hold was cancelled or expired can freely create a new hold.
+    /// </summary>
     [Fact]
     public async Task Test14_Reapply_AfterExpirationOrCancellation_Succeeds()
     {
@@ -388,7 +430,10 @@ public class AdmissionIntegrationTests : IClassFixture<TestWebApplicationFactory
         Assert.NotEqual(hold1.HoldId, hold2!.HoldId);
     }
 
-    // --- TEST 15: VisibilityRule_WhenNewApplicationConfirmed_HidesPreviousExpiredButKeepsCancelled ---
+    /// <summary>
+    /// Verifies Section 4.8 Visibility Rule: when a student confirms a new application, their previous <c>EXPIRED</c> applications
+    /// are hidden from <c>GET /me/holds</c> (while remaining persisted in PostgreSQL) and <c>CANCELLED</c> applications remain visible.
+    /// </summary>
     [Fact]
     public async Task Test15_VisibilityRule_WhenNewApplicationConfirmed_HidesPreviousExpiredButKeepsCancelled()
     {
@@ -437,7 +482,10 @@ public class AdmissionIntegrationTests : IClassFixture<TestWebApplicationFactory
         }
     }
 
-    // --- TEST 16: Concurrency_MultipleStudentsBookingLimitedSeats_NeverExceedsClassCapacity ---
+    /// <summary>
+    /// Verifies high-contention concurrency: when 40 students simultaneously attempt to reserve seats in a 10-seat class,
+    /// exactly 10 succeed (201 Created) and 30 receive 409 Conflict, with <c>availableSeats</c> never dropping below 0.
+    /// </summary>
     [Fact]
     public async Task Test16_Concurrency_MultipleStudentsBookingLimitedSeats_NeverExceedsClassCapacity()
     {
@@ -470,7 +518,11 @@ public class AdmissionIntegrationTests : IClassFixture<TestWebApplicationFactory
         Assert.Equal(0, status.AvailableSeats);
     }
 
-    // --- TEST 17: Concurrency_SameStudentSimultaneousRequests_AcrossTwoBackendInstances ---
+    /// <summary>
+    /// Verifies Bonus 19.1 Multi-Instance Concurrency: when the same student simultaneously sends hold requests
+    /// to two separate backend server instances connected to the same PostgreSQL database, <c>pg_advisory_xact_lock</c>
+    /// guarantees that at most one hold succeeds.
+    /// </summary>
     [Fact]
     public async Task Test17_Concurrency_SameStudentSimultaneousRequests_AcrossTwoBackendInstances()
     {

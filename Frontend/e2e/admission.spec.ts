@@ -1,3 +1,16 @@
+/**
+ * @file admission.spec.ts
+ * @description End-to-End Playwright test suite verifying all user-facing and admin-facing workflows:
+ * - Test 1: Admin class creation -> zero-seat warning -> student BCN setup -> seat hold -> countdown -> confirm -> duplicate application blocking.
+ * - Test 2: Browser refresh resilience on `/applications/:holdId` preserving live countdown and student BCN.
+ * - Test 3: Mobile viewport (375x667) responsiveness, public navbar security (no `/admin` link), and bilingual (`EN | বাংলা`) toggle.
+ * - Test 4: Strict 17-digit BCN validation, privacy masking (`2015*********0012`), and BCN change workflow.
+ * - Test 5: Seat hold cancellation (`DELETE /holds/:holdId`) immediately releasing the seat and recording `CANCELLED` status.
+ * - Test 6: Creating a class with 0 available seats triggers warning dialog and renders as `Full` (`আসন পূর্ণ`) with disabled button.
+ * - Test 7: Admin Portal (`/admin`) overview metric cards reflect live class and seat counts.
+ * - Test 8: Zero browser console errors/warnings, balanced filter pill parentheses, and exact word-boundary class filtering (`Class 1` vs `Class 10`).
+ */
+
 import { test, expect } from '@playwright/test';
 
 test.describe('School Admission System End-to-End Test Suite', () => {

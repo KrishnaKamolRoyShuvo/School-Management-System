@@ -1,3 +1,12 @@
+/**
+ * @file admission.ts
+ * @description Shared TypeScript data transfer object (DTO) interfaces matching the ASP.NET Core backend API contracts.
+ */
+
+/**
+ * Real-time seat inventory and capacity status for a single academic class (`GET /classes`).
+ * Invariant: `heldSeats + confirmedSeats + availableSeats === totalSeats`.
+ */
 export interface SchoolClassDto {
   id: string;
   name: string;
@@ -8,6 +17,9 @@ export interface SchoolClassDto {
   availableSeats: number;
 }
 
+/**
+ * Payload sent when an administrator creates a new class (`POST /classes`).
+ */
 export interface CreateClassRequest {
   name: string;
   shift?: string;
@@ -15,12 +27,18 @@ export interface CreateClassRequest {
   availableSeats?: number;
 }
 
+/**
+ * Response returned after creating a new class (`POST /classes`).
+ */
 export interface CreateClassResponse {
   id: string;
   name: string;
   totalSeats: number;
 }
 
+/**
+ * Represents a student's seat reservation (hold) or admission application (`GET /holds/:holdId`, `GET /me/holds`).
+ */
 export interface HoldDto {
   holdId: string;
   classId: string;
@@ -33,6 +51,9 @@ export interface HoldDto {
   cancelledAt?: string | null;
 }
 
+/**
+ * Response returned when a student confirms an active seat hold (`POST /holds/:holdId/confirm`).
+ */
 export interface ConfirmHoldResponse {
   holdId: string;
   classId: string;
@@ -42,6 +63,9 @@ export interface ConfirmHoldResponse {
   confirmedAt: string;
 }
 
+/**
+ * Aggregate school-wide seat and application statistics for the Admin Portal (`GET /admin/overview`).
+ */
 export interface AdminOverview {
   totalClasses: number;
   totalSeats: number;
@@ -53,6 +77,9 @@ export interface AdminOverview {
   totalCancelledApplications?: number;
 }
 
+/**
+ * Standardized error payload returned by the backend API on 4xx/5xx responses.
+ */
 export interface ApiError {
   code: string;
   message: string;

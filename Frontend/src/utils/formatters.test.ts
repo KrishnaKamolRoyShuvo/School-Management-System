@@ -1,3 +1,9 @@
+/**
+ * @file formatters.test.ts
+ * @description Unit tests for 17-digit Student BCN validation, privacy masking,
+ * Bengali numeral conversion, and remaining countdown calculation.
+ */
+
 import { describe, it, expect } from 'vitest';
 import {
   isValidStudentId,

@@ -1,3 +1,11 @@
+/**
+ * @file MyApplicationsPage.tsx
+ * @description Student Application History & Status Lookup page (`/my-applications`).
+ * Fetches all visible applications for the active 17-digit Student BCN via `GET /me/holds`
+ * (which automatically hides prior `EXPIRED` holds once the student has a `CONFIRMED` admission,
+ * per Section 4.8 of the specification).
+ */
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAdmission } from '../context/AdmissionContext';
@@ -7,6 +15,9 @@ import { StudentIdBanner } from '../components/StudentIdBanner';
 import { toBengaliNumerals, isValidStudentId, maskStudentId } from '../utils/formatters';
 import { ArrowLeft, RefreshCw, ArrowRight } from 'lucide-react';
 
+/**
+ * Displays the application history table for the currently entered 17-digit Student BCN.
+ */
 export const MyApplicationsPage: React.FC = () => {
   const { t, language, bcn, isBcnMasked } = useAdmission();
   const [holds, setHolds] = useState<HoldDto[]>([]);

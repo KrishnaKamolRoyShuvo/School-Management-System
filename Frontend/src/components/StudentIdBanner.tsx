@@ -1,9 +1,19 @@
+/**
+ * @file StudentIdBanner.tsx
+ * @description Interactive banner component for entering, validating, privacy-masking, and changing
+ * the student's 17-digit Birth Certificate Number (BCN). Also surfaces a quick-access alert bar
+ * whenever the active student has an ongoing temporary seat hold (`HELD`).
+ */
+
 import React, { useState } from 'react';
 import { useAdmission } from '../context/AdmissionContext';
 import { maskStudentId, isValidStudentId, toBengaliNumerals } from '../utils/formatters';
 import { Eye, EyeOff, CheckCircle2, AlertCircle, ArrowRight, UserCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+/**
+ * Student BCN input and active hold notification banner displayed at the top of student portal pages.
+ */
 export const StudentIdBanner: React.FC = () => {
   const {
     bcn,

@@ -1,3 +1,14 @@
+/**
+ * @file ClassListPage.tsx
+ * @description Public Student Admission Portal (`/`) displaying real-time seat inventory across all classes.
+ *
+ * Key features:
+ * - Live 3-second silent polling of `/classes` to reflect concurrent seat holds, confirmations, and expirations.
+ * - Zero-click instant filtering by search query, class number (exact word-boundary match), shift, and seat condition.
+ * - Direct seat reservation (`POST /classes/:classId/holds`) with automatic redirect to `/applications/:holdId`
+ *   or conflict notification if the student already holds an active/confirmed application.
+ */
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmission } from '../context/AdmissionContext';
@@ -7,6 +18,9 @@ import { StudentIdBanner } from '../components/StudentIdBanner';
 import { toBengaliNumerals, isValidStudentId } from '../utils/formatters';
 import { Search, RotateCcw, AlertTriangle, ArrowRight, RefreshCw } from 'lucide-react';
 
+/**
+ * Main student-facing class directory and seat reservation page (`/`).
+ */
 export const ClassListPage: React.FC = () => {
   const { t, language, bcn, refreshActiveHold, broadcastSync } = useAdmission();
   const navigate = useNavigate();
@@ -57,7 +71,9 @@ export const ClassListPage: React.FC = () => {
     setActiveTab('ALL');
   };
 
-  // Helper to determine condition of a class
+  /**
+   * Computes the occupancy condition of a class (`FULL`, `EMPTY`, `ALMOST_FULL`, or `AVAILABLE`).
+   */
   const getClassCondition = (c: SchoolClassDto) => {
     const occupied = c.confirmedSeats + c.heldSeats;
     if (c.availableSeats === 0 || occupied >= c.totalSeats) return 'FULL';
@@ -138,7 +154,9 @@ export const ClassListPage: React.FC = () => {
     return { all: classes.length, available, almostFull, empty, full };
   }, [classes]);
 
-  // Apply seat handler
+  /**
+   * Reserves a temporary seat in the selected class for the active 17-digit Student BCN.
+   */
   const handleApply = async (schoolClass: SchoolClassDto) => {
     if (!bcn || !isValidStudentId(bcn)) {
       setApiError({

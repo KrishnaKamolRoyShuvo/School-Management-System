@@ -3,16 +3,36 @@ using SchoolAdmission.Api.Entities;
 
 namespace SchoolAdmission.Api.Data;
 
+/// <summary>
+/// Entity Framework Core database context for the School Admission System.
+/// Configures PostgreSQL table mappings, foreign keys, performance indexes, and concurrency constraints.
+/// </summary>
 public class AdmissionDbContext : DbContext
 {
+    /// <summary>
+    /// Initializes a new instance of <see cref="AdmissionDbContext"/>.
+    /// </summary>
+    /// <param name="options">The options to be used by this <see cref="DbContext"/>.</param>
     public AdmissionDbContext(DbContextOptions<AdmissionDbContext> options)
         : base(options)
     {
     }
 
+    /// <summary>
+    /// Database set representing all academic classes (<c>classes</c> table).
+    /// </summary>
     public DbSet<SchoolClass> Classes => Set<SchoolClass>();
+
+    /// <summary>
+    /// Database set representing all student seat holds and applications (<c>admission_holds</c> table).
+    /// </summary>
     public DbSet<AdmissionHold> Holds => Set<AdmissionHold>();
 
+    /// <summary>
+    /// Configures table names, column mappings, composite indexes, and the partial unique index
+    /// enforcing the Global One-Application Rule.
+    /// </summary>
+    /// <param name="modelBuilder">The builder being used to construct the model for this context.</param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -27,7 +47,7 @@ public class AdmissionDbContext : DbContext
             b.Property(c => c.TotalSeats).HasColumnName("total_seats").IsRequired();
             b.Property(c => c.CreatedAt).HasColumnName("created_at").IsRequired();
 
-            // Case-insensitive uniqueness for class name + shift
+            // Uniqueness constraint for class name + shift
             b.HasIndex(c => new { c.Name, c.Shift })
              .IsUnique();
         });
@@ -50,16 +70,16 @@ public class AdmissionDbContext : DbContext
              .HasForeignKey(h => h.ClassId)
              .OnDelete(DeleteBehavior.Restrict);
 
-            // Fast lookup for class holds
+            // Fast lookup for class seat counting queries
             b.HasIndex(h => new { h.ClassId, h.Status });
 
-            // Fast lookup for student history
+            // Fast lookup for student application history
             b.HasIndex(h => h.StudentId);
 
-            // Fast lookup for background expiration worker
+            // Fast lookup for background expiration worker scanning overdue HELD records
             b.HasIndex(h => new { h.Status, h.ExpiresAt });
 
-            // CRITICAL: Partial unique index enforcing at most one HELD or CONFIRMED hold per student across the school
+            // CRITICAL INVARIANT: Partial unique index enforcing at most one HELD or CONFIRMED hold per student across the entire school
             b.HasIndex(h => h.StudentId)
              .IsUnique()
              .HasDatabaseName("ix_admission_holds_student_active")

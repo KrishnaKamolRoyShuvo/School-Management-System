@@ -1,3 +1,9 @@
+/**
+ * @file AddClassModal.test.tsx
+ * @description Unit tests for `AddClassModal`, verifying Class 1–10 selector boundaries
+ * and the zero-available-seats confirmation warning step.
+ */
+
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { AdmissionProvider } from '../context/AdmissionContext';

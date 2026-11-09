@@ -1,3 +1,9 @@
+/**
+ * @file StudentIdBanner.test.tsx
+ * @description Component tests for `StudentIdBanner`, verifying 17-digit input counter,
+ * button disabled/enabled states, and privacy masking upon submission.
+ */
+
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';

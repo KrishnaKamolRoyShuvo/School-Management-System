@@ -1,3 +1,15 @@
+/**
+ * @file HoldCountdownPage.tsx
+ * @description Application detail and live seat reservation countdown page (`/applications/:holdId`).
+ *
+ * Key responsibilities:
+ * - Reconstructs the live `MM:SS` countdown from the backend's authoritative `expiresAt` UTC timestamp,
+ *   ensuring browser refreshes never reset or corrupt the timer.
+ * - Allows the student to permanently confirm the reservation (`POST /holds/:holdId/confirm`) or
+ *   explicitly cancel it (`DELETE /holds/:holdId`) before expiration.
+ * - Displays contextual status headers and timestamps for `HELD`, `CONFIRMED`, `EXPIRED`, and `CANCELLED` states.
+ */
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAdmission } from '../context/AdmissionContext';
@@ -20,6 +32,9 @@ import {
   Calendar,
 } from 'lucide-react';
 
+/**
+ * Live countdown and application management view for a specific seat hold (`/applications/:holdId`).
+ */
 export const HoldCountdownPage: React.FC = () => {
   const { holdId } = useParams<{ holdId: string }>();
   const { t, language, bcn, isBcnMasked, refreshActiveHold, broadcastSync } = useAdmission();
@@ -81,7 +96,9 @@ export const HoldCountdownPage: React.FC = () => {
     return () => clearInterval(interval);
   }, [hold, refreshActiveHold, broadcastSync]);
 
-  // Confirm hold handler
+  /**
+   * Confirms the active seat hold (`POST /holds/:holdId/confirm`).
+   */
   const handleConfirm = async () => {
     const studentIdToUse = bcn || hold?.studentId;
     if (!hold || !studentIdToUse) return;
@@ -119,7 +136,9 @@ export const HoldCountdownPage: React.FC = () => {
     }
   };
 
-  // Cancel hold handler
+  /**
+   * Cancels the active seat hold (`DELETE /holds/:holdId`) and immediately releases the seat.
+   */
   const handleCancel = async () => {
     const studentIdToUse = bcn || hold?.studentId;
     if (!hold || !studentIdToUse) return;

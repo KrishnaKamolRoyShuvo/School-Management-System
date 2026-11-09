@@ -1,3 +1,10 @@
+/**
+ * @file AddClassModal.tsx
+ * @description Modal dialog used in the Admin Portal (`/admin`) to create a new academic class (Class 1–10)
+ * and shift (`Morning` / `Day`) with configurable total seat capacity (1–120) and initial available seats.
+ * Includes a confirmation warning step if the administrator sets initial `availableSeats` to `0`.
+ */
+
 import React, { useState } from 'react';
 import { useAdmission } from '../context/AdmissionContext';
 import { api, ApiException } from '../services/api';
@@ -5,11 +12,17 @@ import { toBengaliNumerals } from '../utils/formatters';
 import { X, AlertTriangle, Plus, RefreshCw } from 'lucide-react';
 
 interface AddClassModalProps {
+  /** Controls whether the modal is visible. */
   isOpen: boolean;
+  /** Callback invoked when the modal is dismissed. */
   onClose: () => void;
+  /** Callback invoked after a class is successfully created so the parent table can refresh. */
   onSuccess: () => void;
 }
 
+/**
+ * Modal dialog for creating a new school class with seat capacity validation.
+ */
 export const AddClassModal: React.FC<AddClassModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const { t, language, broadcastSync } = useAdmission();
 

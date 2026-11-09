@@ -1,3 +1,9 @@
+/**
+ * @file translations.ts
+ * @description Bilingual localization dictionary supporting English (`en`) and Bengali (`bn`).
+ * Covers all navigation labels, BCN banner prompts, table headers, status badges, modal dialogs, and error messages.
+ */
+
 export type Language = 'en' | 'bn';
 
 export const translations = {

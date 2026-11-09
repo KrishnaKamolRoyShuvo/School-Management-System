@@ -1,3 +1,14 @@
+/**
+ * @file App.tsx
+ * @description Root application layout and route configuration.
+ *
+ * Route structure:
+ * - `/`                     : Public Student Admission Portal (`ClassListPage`)
+ * - `/applications/:holdId` : Live 10-minute seat hold countdown, confirm, and cancel view (`HoldCountdownPage`)
+ * - `/my-applications`      : Student application status lookup by 17-digit BCN (`MyApplicationsPage`)
+ * - `/admin`                : School Administration Portal (`AdminPortalPage`) - accessible via direct URL only
+ */
+
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AdmissionProvider } from './context/AdmissionContext';
@@ -7,6 +18,9 @@ import { HoldCountdownPage } from './pages/HoldCountdownPage';
 import { MyApplicationsPage } from './pages/MyApplicationsPage';
 import { AdminPortalPage } from './pages/AdminPortalPage';
 
+/**
+ * Root application component wrapping all routes in {@link AdmissionProvider} and {@link BrowserRouter}.
+ */
 export const App: React.FC = () => {
   return (
     <AdmissionProvider>

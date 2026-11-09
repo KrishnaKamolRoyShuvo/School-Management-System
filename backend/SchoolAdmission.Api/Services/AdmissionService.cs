@@ -5,12 +5,27 @@ using SchoolAdmission.Api.Entities;
 
 namespace SchoolAdmission.Api.Services;
 
+/// <summary>
+/// Core domain service implementing transactional seat reservation, confirmation, cancellation,
+/// lazy + background expiration, and Section 4.8 visibility rules.
+/// </summary>
+/// <remarks>
+/// Concurrency Strategy:
+/// <list type="number">
+/// <item><description>Acquires a transaction-scoped PostgreSQL advisory lock (<c>pg_advisory_xact_lock(hashtext(studentId))</c>) to serialize simultaneous requests from the same student across multiple backend instances.</description></item>
+/// <item><description>Acquires a row-level write lock (<c>SELECT ... FOR UPDATE</c>) on the target <c>classes</c> row during hold creation and on the <c>admission_holds</c> row during confirmation/cancellation.</description></item>
+/// <item><description>Backed by a database-level partial unique index (<c>ix_admission_holds_student_active</c>) to guarantee at most one active or confirmed application per student.</description></item>
+/// </list>
+/// </remarks>
 public class AdmissionService : IAdmissionService
 {
     private readonly AdmissionDbContext _db;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AdmissionService> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="AdmissionService"/>.
+    /// </summary>
     public AdmissionService(
         AdmissionDbContext db,
         IConfiguration configuration,
@@ -21,6 +36,9 @@ public class AdmissionService : IAdmissionService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Reads the configured hold duration from <c>HOLD_DURATION_SECONDS</c>, defaulting to 600 seconds (10 minutes).
+    /// </summary>
     private int GetHoldDurationSeconds()
     {
         if (int.TryParse(_configuration["HOLD_DURATION_SECONDS"], out var seconds) && seconds > 0)
@@ -30,6 +48,9 @@ public class AdmissionService : IAdmissionService
         return 600; // 10 minutes default
     }
 
+    /// <summary>
+    /// Validates that a Student ID is non-empty and consists of exactly 17 ASCII digits (Birth Certificate Number format).
+    /// </summary>
     private static bool IsValidStudentId(string? studentId)
     {
         return !string.IsNullOrWhiteSpace(studentId) &&
@@ -37,6 +58,7 @@ public class AdmissionService : IAdmissionService
                studentId.Trim().All(char.IsDigit);
     }
 
+    /// <inheritdoc />
     public async Task<int> ExpireOverdueHoldsAsync(CancellationToken ct = default)
     {
         var now = DateTime.UtcNow;
@@ -63,6 +85,7 @@ public class AdmissionService : IAdmissionService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult<CreateClassResponseDto>> CreateClassAsync(CreateClassRequestDto request, CancellationToken ct = default)
     {
         var name = (request.Name ?? "").Trim();
@@ -136,6 +159,7 @@ public class AdmissionService : IAdmissionService
         return ServiceResult<CreateClassResponseDto>.Success(response, 201);
     }
 
+    /// <inheritdoc />
     public async Task<List<ClassSeatStatusDto>> GetAllClassesAsync(CancellationToken ct = default)
     {
         await ExpireOverdueHoldsAsync(ct);
@@ -172,6 +196,7 @@ public class AdmissionService : IAdmissionService
         return result;
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult<ClassSeatStatusDto>> GetClassByIdAsync(string classId, CancellationToken ct = default)
     {
         if (!Guid.TryParse(classId, out var classGuid))
@@ -209,6 +234,7 @@ public class AdmissionService : IAdmissionService
         return ServiceResult<ClassSeatStatusDto>.Success(dto);
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult<CreateHoldResponseDto>> CreateHoldAsync(string classId, string studentId, CancellationToken ct = default)
     {
         var cleanStudentId = (studentId ?? "").Trim();
@@ -227,14 +253,14 @@ public class AdmissionService : IAdmissionService
         await using var tx = await _db.Database.BeginTransactionAsync(ct);
         try
         {
-            // 1. Acquire PostgreSQL advisory lock on studentId to serialize requests for the same student
+            // 1. Acquire PostgreSQL advisory lock on studentId to serialize requests for the same student across instances
             if (_db.Database.IsRelational())
             {
                 await _db.Database.ExecuteSqlInterpolatedAsync(
                     $"SELECT pg_advisory_xact_lock(hashtext({cleanStudentId}))", ct);
             }
 
-            // 2. Lock class row for update to serialize seat availability
+            // 2. Lock class row for update to serialize seat availability checks
             SchoolClass? schoolClass = null;
             if (_db.Database.IsRelational())
             {
@@ -256,14 +282,14 @@ public class AdmissionService : IAdmissionService
 
             var now = DateTime.UtcNow;
 
-            // 3. Inline lazy expiry inside the transaction
+            // 3. Inline lazy expiry inside the transaction so recently expired holds free up seats immediately
             var expired = await _db.Holds
                 .Where(h => h.Status == HoldStatus.Held && h.ExpiresAt <= now)
                 .ToListAsync(ct);
             foreach (var eh in expired) eh.Status = HoldStatus.Expired;
             if (expired.Count > 0) await _db.SaveChangesAsync(ct);
 
-            // 4. Global One-Application Rule across all classes & shifts
+            // 4. Global One-Application Rule check across all classes & shifts
             var existingHold = await _db.Holds
                 .Include(h => h.Class)
                 .Where(h => h.StudentId == cleanStudentId &&
@@ -314,7 +340,7 @@ public class AdmissionService : IAdmissionService
                     409, "NO_SEATS_AVAILABLE", "No seats are currently available in this class.");
             }
 
-            // 6. Create the hold
+            // 6. Create and persist the hold
             var duration = GetHoldDurationSeconds();
             var newHold = new AdmissionHold
             {
@@ -353,6 +379,7 @@ public class AdmissionService : IAdmissionService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult<HoldDetailsResponseDto>> GetHoldByIdAsync(string holdId, string? studentIdHeader, CancellationToken ct = default)
     {
         if (!Guid.TryParse(holdId, out var holdGuid))
@@ -403,6 +430,7 @@ public class AdmissionService : IAdmissionService
         return ServiceResult<HoldDetailsResponseDto>.Success(dto);
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult<ConfirmHoldResponseDto>> ConfirmHoldAsync(string holdId, string studentId, CancellationToken ct = default)
     {
         var cleanStudentId = (studentId ?? "").Trim();
@@ -447,7 +475,7 @@ public class AdmissionService : IAdmissionService
                     403, "FORBIDDEN", "You are not authorized to modify this application.");
             }
 
-            // Idempotency: If already confirmed, return success immediately
+            // Idempotency: If already confirmed, return 200 OK without incrementing confirmed seat count twice
             if (hold.Status == HoldStatus.Confirmed)
             {
                 await tx.CommitAsync(ct);
@@ -457,7 +485,7 @@ public class AdmissionService : IAdmissionService
 
             var now = DateTime.UtcNow;
 
-            // Check if expired
+            // Transition to EXPIRED if the hold window has already elapsed
             if (hold.Status == HoldStatus.Held && hold.ExpiresAt <= now)
             {
                 hold.Status = HoldStatus.Expired;
@@ -474,7 +502,7 @@ public class AdmissionService : IAdmissionService
                     409, "INVALID_STATUS", $"Cannot confirm an application with status {hold.Status}.");
             }
 
-            // Verify capacity before confirming
+            // Verify capacity invariant before confirming
             var confirmedCount = await _db.Holds.CountAsync(
                 h => h.ClassId == hold.ClassId && h.Status == HoldStatus.Confirmed, ct);
             var schoolClass = await _db.Classes.FindAsync(new object[] { hold.ClassId }, ct);
@@ -503,6 +531,7 @@ public class AdmissionService : IAdmissionService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult<bool>> CancelHoldAsync(string holdId, string studentId, CancellationToken ct = default)
     {
         var cleanStudentId = (studentId ?? "").Trim();
@@ -549,7 +578,7 @@ public class AdmissionService : IAdmissionService
 
             var now = DateTime.UtcNow;
 
-            // Preserve EXPIRED status if already expired
+            // Preserve EXPIRED status if the hold window already elapsed before cancellation
             if (hold.Status == HoldStatus.Held && hold.ExpiresAt <= now)
             {
                 hold.Status = HoldStatus.Expired;
@@ -589,6 +618,7 @@ public class AdmissionService : IAdmissionService
         }
     }
 
+    /// <inheritdoc />
     public async Task<ServiceResult<List<StudentHoldItemDto>>> GetStudentHoldsAsync(string studentId, CancellationToken ct = default)
     {
         var cleanStudentId = (studentId ?? "").Trim();
@@ -606,7 +636,8 @@ public class AdmissionService : IAdmissionService
             .OrderByDescending(h => h.CreatedAt)
             .ToListAsync(ct);
 
-        // Section 4.8 Rule: When a student has a CONFIRMED application, hide their previous EXPIRED applications
+        // Section 4.8 Visibility Rule: When a student has a CONFIRMED application, hide their previous EXPIRED applications
+        // (Database rows remain intact for auditing; CANCELLED records remain visible)
         var hasConfirmed = holds.Any(h => h.Status == HoldStatus.Confirmed);
         if (hasConfirmed)
         {
@@ -629,6 +660,7 @@ public class AdmissionService : IAdmissionService
         return ServiceResult<List<StudentHoldItemDto>>.Success(dtoList);
     }
 
+    /// <inheritdoc />
     public async Task<List<HoldDetailsResponseDto>> GetAdminHoldsAsync(string? statusFilter, CancellationToken ct = default)
     {
         await ExpireOverdueHoldsAsync(ct);
@@ -639,7 +671,7 @@ public class AdmissionService : IAdmissionService
 
         var allHolds = await query.OrderByDescending(h => h.CreatedAt).ToListAsync(ct);
 
-        // Section 4.8 Rule: Students with CONFIRMED applications have their previous EXPIRED applications hidden
+        // Section 4.8 Visibility Rule: Students with CONFIRMED applications have their previous EXPIRED applications hidden
         var confirmedStudents = new HashSet<string>(
             allHolds.Where(h => h.Status == HoldStatus.Confirmed).Select(h => h.StudentId)
         );
@@ -668,6 +700,7 @@ public class AdmissionService : IAdmissionService
         )).ToList();
     }
 
+    /// <inheritdoc />
     public async Task<AdminOverviewDto> GetAdminOverviewAsync(CancellationToken ct = default)
     {
         await ExpireOverdueHoldsAsync(ct);
@@ -686,7 +719,7 @@ public class AdmissionService : IAdmissionService
 
         var activeApplications = heldSeats;
 
-        // Apply Section 4.8 visibility filter for count
+        // Apply Section 4.8 visibility filter for expired application count
         var allHolds = await _db.Holds.ToListAsync(ct);
         var confirmedStudents = new HashSet<string>(
             allHolds.Where(h => h.Status == HoldStatus.Confirmed).Select(h => h.StudentId)
