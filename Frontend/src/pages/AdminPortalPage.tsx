@@ -184,12 +184,12 @@ export const AdminPortalPage: React.FC = () => {
       </div>
 
       {/* Friendly Server Down Banner */}
-      {serverError && classes.length === 0 && (
-        <div className="mb-6 p-6 sm:p-8 bg-amber-50 border border-amber-200 rounded-sm text-center space-y-3 shadow-none">
-          <div className="w-14 h-14 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center mx-auto">
-            <AlertTriangle className="w-7 h-7" />
+      {serverError && classes.length === 0 ? (
+        <div className="mb-6 p-8 sm:p-12 bg-amber-50 border border-amber-200 rounded-sm text-center space-y-4 shadow-none">
+          <div className="w-16 h-16 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-8 h-8" />
           </div>
-          <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 leading-snug">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 leading-snug">
             {t.serverDownTitle}
           </h2>
           <p className="text-sm sm:text-base text-slate-700 max-w-xl mx-auto leading-relaxed">
@@ -208,9 +208,9 @@ export const AdminPortalPage: React.FC = () => {
             </button>
           </div>
         </div>
-      )}
-
-      {/* Overview Stat Cards */}
+      ) : (
+        <>
+          {/* Overview Stat Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
         <div className="panel p-4">
           <div className="eyebrow">{t.statClasses}</div>
@@ -684,6 +684,8 @@ export const AdminPortalPage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
 
       {/* Add Class Modal */}

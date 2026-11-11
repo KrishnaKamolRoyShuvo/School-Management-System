@@ -228,8 +228,8 @@ export const ClassListPage: React.FC = () => {
         </p>
       </div>
 
-      {/* Friendly Server Down Banner (Top Prominent) */}
-      {serverError && classes.length === 0 && (
+      {/* Friendly Server Down Banner */}
+      {serverError && classes.length === 0 ? (
         <div className="mb-8 p-6 sm:p-8 bg-amber-50 border border-amber-200 rounded-sm text-center space-y-3 shadow-none">
           <div className="w-14 h-14 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center mx-auto">
             <AlertTriangle className="w-7 h-7" />
@@ -253,7 +253,8 @@ export const ClassListPage: React.FC = () => {
             </button>
           </div>
         </div>
-      )}
+      ) : (
+        <>
 
       {/* Conflict / Error Banner Modal */}
       {apiError && (
@@ -457,29 +458,6 @@ export const ClassListPage: React.FC = () => {
                     <span>{language === 'bn' ? 'তথ্য লোড হচ্ছে...' : 'Loading classes...'}</span>
                   </td>
                 </tr>
-              ) : serverError && classes.length === 0 ? (
-                <tr>
-                  <td colSpan={10} className="text-center py-12 px-4">
-                    <div className="max-w-md mx-auto p-6 bg-amber-50 border border-amber-200 rounded-sm text-center space-y-3">
-                      <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
-                        <AlertTriangle className="w-5 h-5" />
-                      </div>
-                      <h3 className="font-bold text-slate-900 text-sm sm:text-base">
-                        {t.serverDownTitle}
-                      </h3>
-                      <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                        {t.serverDownDesc}
-                      </p>
-                      <button
-                        onClick={() => fetchClasses()}
-                        className="btn btn-default btn-sm text-xs font-semibold px-4 inline-flex items-center gap-1.5"
-                      >
-                        <RefreshCw className="w-3.5 h-3.5" />
-                        <span>{t.retryConnection}</span>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
               ) : filteredClasses.length === 0 ? (
                 <tr>
                   <td colSpan={10} className="text-center py-10 text-slate-500">
@@ -589,6 +567,8 @@ export const ClassListPage: React.FC = () => {
           </table>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 };
