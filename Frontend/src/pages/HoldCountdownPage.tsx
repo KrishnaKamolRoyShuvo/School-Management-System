@@ -24,6 +24,7 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
+  AlertTriangle,
   XCircle,
   ArrowLeft,
   RefreshCw,
@@ -41,6 +42,7 @@ export const HoldCountdownPage: React.FC = () => {
 
   const [hold, setHold] = useState<HoldDto | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isServerError, setIsServerError] = useState<boolean>(false);
   const [actionLoading, setActionLoading] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -54,6 +56,7 @@ export const HoldCountdownPage: React.FC = () => {
   const fetchHold = useCallback(async () => {
     if (!holdId) return;
     try {
+      setIsServerError(false);
       const data = await api.getHold(holdId, bcn);
       setHold(data);
       if (data.status === 'HELD') {
@@ -62,18 +65,18 @@ export const HoldCountdownPage: React.FC = () => {
       }
     } catch (err: any) {
       if (err instanceof ApiException) {
-        setErrorMsg(err.message);
+        if (err.statusCode >= 500 || err.statusCode === 0) {
+          setIsServerError(true);
+        } else {
+          setErrorMsg(err.message);
+        }
       } else {
-        setErrorMsg(
-          language === 'bn'
-            ? 'আবেদনের তথ্য লোড করা যায়নি।'
-            : 'Could not load application details.'
-        );
+        setIsServerError(true);
       }
     } finally {
       setLoading(false);
     }
-  }, [holdId, bcn, language]);
+  }, [holdId, bcn]);
 
   useEffect(() => {
     fetchHold();
@@ -120,15 +123,23 @@ export const HoldCountdownPage: React.FC = () => {
       await refreshActiveHold();
     } catch (err: any) {
       if (err instanceof ApiException) {
-        setErrorMsg(err.message);
         if (err.errorPayload?.code === 'HOLD_EXPIRED') {
           setHold((prev) => (prev ? { ...prev, status: 'EXPIRED' } : null));
+          setErrorMsg(t.holdExpiredAlert);
+        } else if (err.errorPayload?.code === 'WRONG_STUDENT' || err.statusCode === 403) {
+          setErrorMsg(
+            language === 'bn'
+              ? 'এই আবেদনটি অন্য একজন শিক্ষার্থীর জন্ম নিবন্ধন নম্বরের মাধ্যমে সংরক্ষিত হয়েছে।'
+              : 'This application belongs to a different student birth certificate number.'
+          );
+        } else {
+          setErrorMsg(err.message);
         }
       } else {
         setErrorMsg(
           language === 'bn'
-            ? 'আসন নিশ্চিত করা সম্ভব হয়নি।'
-            : 'Could not confirm seat.'
+            ? 'সার্ভারের সাথে সংযোগ স্থাপন করা সম্ভব হয়নি। অনুগ্রহ করে পুনরায় চেষ্টা করুন।'
+            : 'Could not connect to the server. Please try again.'
         );
       }
     } finally {
@@ -161,12 +172,17 @@ export const HoldCountdownPage: React.FC = () => {
       await refreshActiveHold();
     } catch (err: any) {
       if (err instanceof ApiException) {
-        setErrorMsg(err.message);
+        if (err.errorPayload?.code === 'HOLD_EXPIRED') {
+          setHold((prev) => (prev ? { ...prev, status: 'EXPIRED' } : null));
+          setErrorMsg(t.holdExpiredAlert);
+        } else {
+          setErrorMsg(err.message);
+        }
       } else {
         setErrorMsg(
           language === 'bn'
-            ? 'সংরক্ষণ বাতিল করা সম্ভব হয়নি।'
-            : 'Could not cancel reservation.'
+            ? 'সার্ভারের সাথে সংযোগ স্থাপন করা সম্ভব হয়নি।'
+            : 'Could not connect to the server.'
         );
       }
     } finally {
@@ -179,6 +195,40 @@ export const HoldCountdownPage: React.FC = () => {
       <div className="max-w-2xl mx-auto px-4 py-16 text-center text-slate-500">
         <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-3 text-brand" />
         <p>{language === 'bn' ? 'আবেদনের তথ্য লোড হচ্ছে...' : 'Loading application...'}</p>
+      </div>
+    );
+  }
+
+  if (isServerError && !hold) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-12">
+        <div className="bg-amber-50 border border-amber-200 rounded-sm p-8 text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-8 h-8" />
+          </div>
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 leading-snug">
+            {t.serverDownTitle}
+          </h2>
+          <p className="text-sm sm:text-base text-slate-700 max-w-lg mx-auto leading-relaxed">
+            {t.serverDownDesc}
+          </p>
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+            <button
+              onClick={() => {
+                setLoading(true);
+                fetchHold();
+              }}
+              className="btn btn-default btn-md text-sm font-bold flex items-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>{t.retryConnection}</span>
+            </button>
+            <Link to="/" className="btn btn-outline btn-md text-sm">
+              <ArrowLeft className="w-4 h-4" />
+              <span>{t.btnBackHome}</span>
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
@@ -373,9 +423,9 @@ export const HoldCountdownPage: React.FC = () => {
         </div>
 
         {/* Action Controls */}
-        <div className="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+        <div className="pt-4 border-t border-slate-100">
           {isHeld && (
-            <>
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <button
                 onClick={handleCancel}
                 disabled={actionLoading}
@@ -387,7 +437,7 @@ export const HoldCountdownPage: React.FC = () => {
               <button
                 onClick={handleConfirm}
                 disabled={actionLoading}
-                className="btn btn-default btn-lg text-sm font-bold px-6 shadow-sm"
+                className="btn btn-default btn-lg text-sm font-bold px-6 shadow-sm flex items-center gap-2"
               >
                 {actionLoading ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />
@@ -398,10 +448,52 @@ export const HoldCountdownPage: React.FC = () => {
                   </>
                 )}
               </button>
-            </>
+            </div>
           )}
 
-          {!isHeld && (
+          {isExpired && (
+            <div className="w-full space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-sm">
+                <button
+                  disabled
+                  className="btn btn-outline btn-sm text-xs text-slate-400 border-slate-200 cursor-not-allowed opacity-60"
+                >
+                  {t.btnCancelReservation}
+                </button>
+
+                <button
+                  disabled
+                  aria-disabled="true"
+                  title={
+                    language === 'bn'
+                      ? 'মেয়াদ শেষ হওয়ায় ভর্তি ফি দেওয়া যাবে না'
+                      : 'Payment disabled because hold expired'
+                  }
+                  className="btn btn-default btn-lg text-sm font-bold px-6 bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed opacity-60 shadow-none flex items-center gap-2 select-none"
+                >
+                  <CheckCircle2 className="w-4 h-4 text-slate-400" />
+                  <span>{t.btnConfirmSeat}</span>
+                </button>
+              </div>
+
+              <div className="p-3.5 bg-red-50 border border-red-200 rounded-sm text-center">
+                <p className="text-xs sm:text-sm font-bold text-red-700">
+                  {t.expiredFeeDisabledNotice}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+                <Link to="/" className="btn btn-default btn-sm text-xs">
+                  {t.btnBackHome}
+                </Link>
+                <Link to="/my-applications" className="btn btn-outline btn-sm text-xs">
+                  {t.myApplications}
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {(isConfirmed || isCancelled) && (
             <div className="w-full flex flex-wrap items-center justify-center gap-3">
               <Link to="/" className="btn btn-default btn-sm text-xs">
                 {t.btnBackHome}

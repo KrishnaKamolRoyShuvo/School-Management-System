@@ -89,7 +89,9 @@ public class AdmissionService : IAdmissionService
     public async Task<ServiceResult<CreateClassResponseDto>> CreateClassAsync(CreateClassRequestDto request, CancellationToken ct = default)
     {
         var name = (request.Name ?? "").Trim();
-        var shift = string.IsNullOrWhiteSpace(request.Shift) ? "Morning" : request.Shift.Trim();
+        var shift = string.IsNullOrWhiteSpace(request.Shift)
+            ? (name.Contains("Day", StringComparison.OrdinalIgnoreCase) || name.Contains("দিবা") ? "Day" : "Morning")
+            : request.Shift.Trim();
         var totalSeats = request.TotalSeats;
 
         if (string.IsNullOrWhiteSpace(name))

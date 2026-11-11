@@ -82,7 +82,7 @@ test.describe('School Admission System End-to-End Test Suite', () => {
     await expect(page.locator('.font-extrabold')).toBeVisible();
 
     // 10. Confirm seat
-    await page.click("button:has-text('আসন নিশ্চিত করুন'), button:has-text('Confirm Seat')");
+    await page.click("button:has-text('ভর্তি ফি দিন'), button:has-text('Pay Admission Fee')");
 
     // Confirmed state
     await expect(
@@ -208,7 +208,7 @@ test.describe('School Admission System End-to-End Test Suite', () => {
     await expect(page).toHaveURL(/.*\/applications\/.*/);
 
     // Click Cancel reservation (no blocking window.confirm dialog needed)
-    const cancelHoldBtn = page.locator("button:has-text('সংরক্ষণ বাতিল করুন'), button:has-text('Cancel Reservation')");
+    const cancelHoldBtn = page.locator("button:has-text('বাতিল'), button:has-text('Cancel')");
     await expect(cancelHoldBtn).toBeVisible();
     await cancelHoldBtn.click();
 

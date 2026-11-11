@@ -21,6 +21,8 @@ out/
 *.sln.docstates
 .vs/
 TestResults/
+.local/
+.nuget/
 
 # Node / Frontend
 node_modules/

@@ -68,8 +68,8 @@ export const translations = {
     
     // Actions
     btnApplySeat: "Apply for a seat",
-    btnConfirmSeat: "Confirm Seat",
-    btnCancelReservation: "Cancel Reservation",
+    btnConfirmSeat: "Pay Admission Fee",
+    btnCancelReservation: "Cancel",
     btnViewApplication: "View Application",
     btnBackHome: "Back to Class List",
     btnNewApplication: "New Application",
@@ -114,14 +114,21 @@ export const translations = {
     
     // Warning Dialogs
     warningZeroSeatsTitle: "Zero Available Seats Warning",
-    warningZeroSeatsBody: "There are no available seats for application in this class (Available Seats = 0). Do you really want to add this class?",
+    warningZeroSeatsBody: "Notice: There are no available seats marked for students in this class (Available Seats = 0). If created, applicants will see it as Full immediately. Are you sure you want to proceed?",
     btnConfirmAddClassAnyway: "Yes, create class anyway",
     
-    // Errors
+    // Errors & Connectivity
     networkError: "We could not connect to the server. Please try again.",
-    existingHeldApp: "You already have an ongoing application. Redirecting you to it.",
-    existingConfirmedApp: "You already have a confirmed admission and cannot apply again.",
-    noSeatsAvailable: "No seats are currently available in this class.",
+    serverDownTitle: "We're having trouble connecting to the admission server",
+    serverDownDesc: "Our technical team is actively working on it. This is a temporary server connection issue, not a problem with school seats or services. Please try again in a few moments.",
+    retryConnection: "Retry Connection",
+    expiredFeeDisabledNotice: "⚠️ The 10-minute reservation window has expired. The admission fee payment button is now disabled, and the seat has been returned to the open pool. Please submit a new application.",
+    existingHeldApp: "You already have an active seat reservation in progress. A student cannot reserve multiple seats at once. Please complete payment on your active hold or cancel it to apply for a new class.",
+    existingConfirmedApp: "Congratulations! You already have a confirmed admission and cannot apply again. Under school regulations, each student can only enroll in one seat.",
+    noSeatsAvailable: "We're sorry, this class has no available seats remaining. Please check another class or shift.",
+    holdExpiredAlert: "Sorry, your 10-minute hold window expired before payment was confirmed. The seat has returned to the school pool. You can apply again anytime.",
+    bcnRequiredAlert: "Please enter your 17-digit birth certificate number in the banner above and click Submit before applying.",
+    bcnInvalidAlert: "Birth certificate number must be exactly 17 numeric digits (e.g. 20151234567890123).",
   },
   bn: {
     // Brand & Header
@@ -184,8 +191,8 @@ export const translations = {
     
     // Actions
     btnApplySeat: "আবেদন করুন",
-    btnConfirmSeat: "আসন নিশ্চিত করুন",
-    btnCancelReservation: "সংরক্ষণ বাতিল করুন",
+    btnConfirmSeat: "ভর্তি ফি দিন",
+    btnCancelReservation: "বাতিল",
     btnViewApplication: "আবেদন দেখুন",
     btnBackHome: "হোমপেজে ফিরে যান",
     btnNewApplication: "অন্য শিক্ষার্থীর আবেদন",
@@ -230,13 +237,20 @@ export const translations = {
     
     // Warning Dialogs
     warningZeroSeatsTitle: "কোনো আসন খালি নেই সতর্কবার্তা",
-    warningZeroSeatsBody: "এই শ্রেণিতে আবেদনের জন্য কোনো আসন খালি রাখা হয়নি (খালি আসন = ০)। আপনি কি সত্যিই এই শ্রেণিটি যোগ করতে চান?",
+    warningZeroSeatsBody: "মনোযোগ দিন: এই শ্রেণিতে আবেদনের জন্য কোনো আসন খালি রাখা হয়নি (খালি আসন = ০)। আপনি যোগ করলে শিক্ষার্থীরা সরাসরি এতে আবেদন করতে পারবে না। আপনি কি নিশ্চিত যে এই শ্রেণিটি তৈরি করতে চান?",
     btnConfirmAddClassAnyway: "হ্যাঁ, তবুও যোগ করুন",
     
-    // Errors
+    // Errors & Connectivity
     networkError: "সার্ভারে যোগাযোগ করা সম্ভব হয়নি। অনুগ্রহ করে পুনরায় চেষ্টা করুন।",
-    existingHeldApp: "এই শিক্ষার্থীর নামে ইতিমধ্যে একটি আবেদন চলমান রয়েছে।",
-    existingConfirmedApp: "এই শিক্ষার্থীর একটি আসন ইতিমধ্যে নিশ্চিত করা হয়েছে। নতুন আবেদন সম্ভব নয়।",
-    noSeatsAvailable: "এই শ্রেণিতে বর্তমানে কোনো আসন খালি নেই।",
+    serverDownTitle: "দুঃখিত, যান্ত্রিক কারণে আমাদের সার্ভার বর্তমানে ডাউন আছে",
+    serverDownDesc: "আমাদের টেকনিক্যাল টিম এটি নিয়ে দ্রুত কাজ করছেন। এটি কেবল সার্ভার সংযোগের সাময়িক সমস্যা—কোনো আসন বা সেবার সমস্যা নয়। আপনি কিছুক্ষণ পর আবার চেষ্টা করুন।",
+    retryConnection: "পুনরায় চেষ্টা করুন",
+    expiredFeeDisabledNotice: "⚠️ আবেদনের ১০ মিনিটের সময়সীমা শেষ হওয়ায় ভর্তি ফি পরিশোধের বাটনটি নিষ্ক্রিয় করা হয়েছে এবং আসনটি উন্মুক্ত করা হয়েছে। আপনি পুনরায় নতুন আবেদন করতে পারেন।",
+    existingHeldApp: "আপনার নামে ইতিমধ্যে একটি শ্রেণির আসন সাময়িকভাবে সংরক্ষিত (HELD) রয়েছে। একই সাথে দুটি আবেদন করা সম্ভব নয়। অনুগ্রহ করে পূর্বের আবেদনটিতে গিয়ে ভর্তি ফি দিন অথবা সেটি বাতিল করে পুনরায় আবেদন করুন।",
+    existingConfirmedApp: "অভিনন্দন! এই শিক্ষার্থীর একটি আসন ইতিমধ্যে নিশ্চিত করা হয়েছে। নিয়ম অনুযায়ী একজন শিক্ষার্থী কেবল একটি আসনেই ভর্তি হতে পারবে। নতুন কোনো আবেদন গ্রহণযোগ্য নয়।",
+    noSeatsAvailable: "দুঃখিত, এই শ্রেণিতে বর্তমানে কোনো আসন খালি নেই। অনুগ্রহ করে অন্য কোনো শ্রেণি বা শিফটে চেষ্টা করুন।",
+    holdExpiredAlert: "দুঃখিত, নির্ধারিত ১০ মিনিটের মধ্যে ভর্তি ফি পরিশোধ না করায় আপনার আসনটির মেয়াদ শেষ হয়েছে। আসনটি পুনরায় উন্মুক্ত করা হয়েছে। আপনি চাইলে নতুন করে আবেদন করতে পারেন।",
+    bcnRequiredAlert: "আবেদন করার আগে অনুগ্রহ করে উপরে আপনার ১৭ ডিজিটের জন্ম নিবন্ধন নম্বর লিখুন এবং 'দাখিল করুন' বাটনে ক্লিক করুন।",
+    bcnInvalidAlert: "জন্ম নিবন্ধন নম্বর অবশ্যই ১৭ ডিজিটের সংখ্যা হতে হবে (যেমন: ২০১৫১২৩৪৫৬৭৮৯০১২৩)।",
   }
 };

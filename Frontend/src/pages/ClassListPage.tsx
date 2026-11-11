@@ -27,6 +27,7 @@ export const ClassListPage: React.FC = () => {
 
   const [classes, setClasses] = useState<SchoolClassDto[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [serverError, setServerError] = useState<boolean>(false);
   const [applyingClassId, setApplyingClassId] = useState<string | null>(null);
   const [apiError, setApiError] = useState<{
     code: string;
@@ -46,8 +47,9 @@ export const ClassListPage: React.FC = () => {
     try {
       const data = await api.getClasses();
       setClasses(data);
+      setServerError(false);
     } catch {
-      // ignore transient poll error
+      setServerError(true);
     } finally {
       if (!isSilent) setLoading(false);
     }
@@ -161,10 +163,7 @@ export const ClassListPage: React.FC = () => {
     if (!bcn || !isValidStudentId(bcn)) {
       setApiError({
         code: 'BCN_REQUIRED',
-        message:
-          language === 'bn'
-            ? 'আবেদন করতে অনুগ্রহ করে প্রথমে উপরে ১৭ ডিজিটের জন্ম নিবন্ধন নম্বর লিখুন।'
-            : 'Please enter a valid 17-digit birth certificate number in the banner above before applying.',
+        message: !bcn ? t.bcnRequiredAlert : t.bcnInvalidAlert,
       });
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
@@ -180,18 +179,23 @@ export const ClassListPage: React.FC = () => {
       navigate(`/applications/${hold.holdId}`);
     } catch (err: any) {
       if (err instanceof ApiException && err.errorPayload) {
+        let msg = err.errorPayload.message;
+        if (err.errorPayload.code === 'EXISTING_HELD_APPLICATION') {
+          msg = t.existingHeldApp;
+        } else if (err.errorPayload.code === 'EXISTING_CONFIRMED_ADMISSION') {
+          msg = t.existingConfirmedApp;
+        } else if (err.errorPayload.code === 'CLASS_FULL') {
+          msg = t.noSeatsAvailable;
+        }
         setApiError({
           code: err.errorPayload.code,
-          message: err.errorPayload.message,
+          message: msg,
           existingHoldId: err.errorPayload.existingHoldId,
         });
       } else {
         setApiError({
           code: 'ERROR',
-          message:
-            language === 'bn'
-              ? 'আবেদন সম্পন্ন করা সম্ভব হয়নি। অনুগ্রহ করে পুনরায় চেষ্টা করুন।'
-              : 'Could not complete seat reservation. Please try again.',
+          message: language === 'bn' ? t.networkError : 'Could not complete seat reservation. Please try again.',
         });
       }
     } finally {
@@ -223,6 +227,33 @@ export const ClassListPage: React.FC = () => {
           )}
         </p>
       </div>
+
+      {/* Friendly Server Down Banner (Top Prominent) */}
+      {serverError && classes.length === 0 && (
+        <div className="mb-8 p-6 sm:p-8 bg-amber-50 border border-amber-200 rounded-sm text-center space-y-3 shadow-none">
+          <div className="w-14 h-14 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-7 h-7" />
+          </div>
+          <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 leading-snug">
+            {t.serverDownTitle}
+          </h2>
+          <p className="text-sm sm:text-base text-slate-700 max-w-xl mx-auto leading-relaxed">
+            {t.serverDownDesc}
+          </p>
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                setLoading(true);
+                fetchClasses();
+              }}
+              className="btn btn-default btn-md text-sm font-bold inline-flex items-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>{t.retryConnection}</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Conflict / Error Banner Modal */}
       {apiError && (
@@ -424,6 +455,29 @@ export const ClassListPage: React.FC = () => {
                   <td colSpan={10} className="text-center py-10 text-slate-500">
                     <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-brand" />
                     <span>{language === 'bn' ? 'তথ্য লোড হচ্ছে...' : 'Loading classes...'}</span>
+                  </td>
+                </tr>
+              ) : serverError && classes.length === 0 ? (
+                <tr>
+                  <td colSpan={10} className="text-center py-12 px-4">
+                    <div className="max-w-md mx-auto p-6 bg-amber-50 border border-amber-200 rounded-sm text-center space-y-3">
+                      <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
+                        <AlertTriangle className="w-5 h-5" />
+                      </div>
+                      <h3 className="font-bold text-slate-900 text-sm sm:text-base">
+                        {t.serverDownTitle}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                        {t.serverDownDesc}
+                      </p>
+                      <button
+                        onClick={() => fetchClasses()}
+                        className="btn btn-default btn-sm text-xs font-semibold px-4 inline-flex items-center gap-1.5"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        <span>{t.retryConnection}</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ) : filteredClasses.length === 0 ? (

@@ -34,9 +34,9 @@ export const StudentIdBanner: React.FC = () => {
     const clean = inputVal.trim();
     if (!isValidStudentId(clean)) {
       setErrorMsg(
-        language === 'bn'
-          ? 'অনুগ্রহ করে সঠিক ১৭ ডিজিটের জন্ম নিবন্ধন নম্বর লিখুন।'
-          : 'Please enter a valid 17-digit birth certificate number.'
+        !clean
+          ? t.bcnRequiredAlert
+          : t.bcnInvalidAlert
       );
       return;
     }

@@ -25,6 +25,7 @@ import {
   EyeOff,
   Users,
   Layers,
+  AlertTriangle,
 } from 'lucide-react';
 
 /**
@@ -37,6 +38,7 @@ export const AdminPortalPage: React.FC = () => {
   const [holds, setHolds] = useState<HoldDto[]>([]);
   const [overview, setOverview] = useState<AdminOverview | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [serverError, setServerError] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'CLASSES' | 'APPLICATIONS'>('CLASSES');
   const [isAddClassModalOpen, setIsAddClassModalOpen] = useState<boolean>(false);
   const [maskStudentIds, setMaskStudentIds] = useState<boolean>(true);
@@ -64,8 +66,9 @@ export const AdminPortalPage: React.FC = () => {
       setClasses(classesData);
       setOverview(overviewData);
       setHolds(holdsData);
+      setServerError(false);
     } catch {
-      // ignore transient polling error
+      if (!isSilent) setServerError(true);
     } finally {
       if (!isSilent) setLoading(false);
     }
@@ -179,6 +182,33 @@ export const AdminPortalPage: React.FC = () => {
           <span>{t.btnAddClass}</span>
         </button>
       </div>
+
+      {/* Friendly Server Down Banner */}
+      {serverError && classes.length === 0 && (
+        <div className="mb-6 p-6 sm:p-8 bg-amber-50 border border-amber-200 rounded-sm text-center space-y-3 shadow-none">
+          <div className="w-14 h-14 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-7 h-7" />
+          </div>
+          <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 leading-snug">
+            {t.serverDownTitle}
+          </h2>
+          <p className="text-sm sm:text-base text-slate-700 max-w-xl mx-auto leading-relaxed">
+            {t.serverDownDesc}
+          </p>
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                setLoading(true);
+                fetchData();
+              }}
+              className="btn btn-default btn-md text-sm font-bold inline-flex items-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>{t.retryConnection}</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Overview Stat Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">

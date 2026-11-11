@@ -13,7 +13,7 @@ import { api } from '../services/api';
 import { HoldDto } from '../types/admission';
 import { StudentIdBanner } from '../components/StudentIdBanner';
 import { toBengaliNumerals, isValidStudentId, maskStudentId } from '../utils/formatters';
-import { ArrowLeft, RefreshCw, ArrowRight } from 'lucide-react';
+import { ArrowLeft, RefreshCw, ArrowRight, AlertTriangle } from 'lucide-react';
 
 /**
  * Displays the application history table for the currently entered 17-digit Student BCN.
@@ -22,20 +22,24 @@ export const MyApplicationsPage: React.FC = () => {
   const { t, language, bcn, isBcnMasked } = useAdmission();
   const [holds, setHolds] = useState<HoldDto[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [serverError, setServerError] = useState<boolean>(false);
 
   const fetchHolds = useCallback(async () => {
     if (!bcn || !isValidStudentId(bcn)) {
       setHolds([]);
       setLoading(false);
+      setServerError(false);
       return;
     }
 
     setLoading(true);
+    setServerError(false);
     try {
       const data = await api.getMyHolds(bcn);
       setHolds(data);
     } catch {
       setHolds([]);
+      setServerError(true);
     } finally {
       setLoading(false);
     }
@@ -81,6 +85,27 @@ export const MyApplicationsPage: React.FC = () => {
           <div className="p-10 text-center text-slate-500">
             <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-brand" />
             <p className="text-xs">{language === 'bn' ? 'তথ্য লোড হচ্ছে...' : 'Loading applications...'}</p>
+          </div>
+        ) : serverError ? (
+          <div className="p-10 text-center space-y-3 bg-amber-50/70 border-b border-amber-200">
+            <div className="w-14 h-14 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-7 h-7" />
+            </div>
+            <h2 className="text-base sm:text-lg font-bold text-slate-900">
+              {t.serverDownTitle}
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-700 max-w-md mx-auto">
+              {t.serverDownDesc}
+            </p>
+            <div className="pt-2">
+              <button
+                onClick={fetchHolds}
+                className="btn btn-default btn-sm text-xs font-bold inline-flex items-center gap-2"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>{t.retryConnection}</span>
+              </button>
+            </div>
           </div>
         ) : holds.length === 0 ? (
           <div className="p-10 text-center text-slate-500 space-y-3">

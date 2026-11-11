@@ -79,12 +79,20 @@ export const AddClassModal: React.FC<AddClassModalProps> = ({ isOpen, onClose, o
       onClose();
     } catch (err: any) {
       if (err instanceof ApiException) {
-        setErrorMsg(err.message);
+        if (err.errorPayload?.code === 'DUPLICATE_CLASS') {
+          setErrorMsg(
+            language === 'bn'
+              ? 'এই শ্রেণি ও শিফট ইতিমধ্যে সিস্টেমে যোগ করা হয়েছে। একই নামে একাধিক শ্রেণি তৈরি করা যাবে না।'
+              : 'A class with this exact name and shift already exists in the system.'
+          );
+        } else {
+          setErrorMsg(err.message);
+        }
       } else {
         setErrorMsg(
           language === 'bn'
-            ? 'শ্রেণি তৈরি করা সম্ভব হয়নি।'
-            : 'Could not create class.'
+            ? 'সার্ভারের সাথে যোগাযোগ করা সম্ভব হয়নি। অনুগ্রহ করে পুনরায় চেষ্টা করুন।'
+            : 'Could not connect to the server. Please try again.'
         );
       }
     } finally {
