@@ -75,6 +75,33 @@ if (app.Environment.IsDevelopment())
 app.UseCors();
 app.MapControllers();
 
+// Root endpoint: returns API directory and service health
+app.MapGet("/", () => Results.Ok(new
+{
+    service = "Onnorokom Ideal School Admission API",
+    status = "Online",
+    version = "1.0",
+    description = "REST API for Onnorokom Ideal School Admission System. Student identity is provided via X-Student-Id header.",
+    endpoints = new Dictionary<string, string>
+    {
+        ["GET /classes"] = "List all classes with seat quota and availability",
+        ["GET /classes/{id}"] = "Get seat status for a specific class",
+        ["POST /classes"] = "Create a new class (Admin)",
+        ["POST /classes/{id}/holds"] = "Place a 10-minute temporary seat hold (Requires X-Student-Id header)",
+        ["GET /holds/{id}"] = "Get details of an application hold",
+        ["POST /holds/{id}/confirm"] = "Confirm admission fee payment (Requires X-Student-Id header)",
+        ["DELETE /holds/{id}"] = "Cancel an active seat reservation (Requires X-Student-Id header)",
+        ["GET /me/holds"] = "List application history for a student (Requires X-Student-Id header)",
+        ["GET /admin/overview"] = "Aggregate school-wide admission metrics",
+        ["GET /admin/holds"] = "Full audit log of student holds (supports ?status= filter)"
+    },
+    portals = new
+    {
+        studentPortal = "http://localhost:5173",
+        adminPortal = "http://localhost:5173/admin"
+    }
+}));
+
 app.Run();
 
 /// <summary>
