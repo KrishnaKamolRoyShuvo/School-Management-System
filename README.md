@@ -99,7 +99,7 @@ npm run dev
 2. **Temporary Hold:** Creating a hold locks 1 seat for 10 minutes (`HELD`).
 3. **Live Countdown:** The frontend synchronizes with server-side `expiresAt` so browser refreshes never reset the clock.
 4. **Payment & Confirmation:** Clicking **"ভর্তি ফি দিন"** (`Pay Admission Fee`) simulates payment and transitions the hold to `CONFIRMED`. It is idempotent: clicking multiple times never duplicates seats.
-5. **Cancellation & Expiration:** Students can click **"বাতিল"** (`Cancel`) to release their hold immediately. An internal background service sweeps expired holds every 2 seconds, and all API calls perform inline checks so expired holds are never confirmed late.
+5. **Cancellation & Expiration:** Students can click **"বাতিল"** (`Cancel`) to release their hold immediately. When the 10-minute timer expires, the "Pay Admission Fee" button remains visible in a disabled condition with a clear timeout notice. An internal background service sweeps expired holds every 2 seconds, and all API calls perform inline checks so expired holds can never be confirmed late.
 6. **One Application Rule:** A student can hold at most **one** active or confirmed seat across the entire school.
 
 ---
@@ -162,7 +162,11 @@ Make sure PostgreSQL is running (`docker compose up -d postgres`).
 ```bash
 dotnet test backend/SchoolAdmission.slnx
 ```
-*Meets and exceeds the PDF requirement (minimum 3 tests including concurrency): validates 40 concurrent requests competing for 5 seats (`held + confirmed <= totalSeats`), multi-server lock coordination across two backend instances (Bonus 2.6), lazy expiration, and idempotent confirmation.*
+*Directly satisfies and exceeds the PDF assignment requirements (Section 2.5):*
+- **Normal Flow Test:** Hold placed -> Confirmed -> Available seats decremented.
+- **Concurrency Race Condition Test:** 40 simultaneous requests competing for 5 seats; strictly asserts that `held + confirmed <= totalSeats` and zero overbooking occurs.
+- **Hold Expiry Test:** Expired hold automatically frees seat back to the open pool.
+- **Multi-Instance Bonus Test (Section 2.6):** Concurrent requests hitting two separate backend instances (`:8080` and `:8081`) sharing PostgreSQL serialize cleanly without race conditions.
 
 ### 2. Frontend Unit Tests (15 Vitest Tests)
 ```bash

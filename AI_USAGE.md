@@ -21,8 +21,8 @@ This document explains how AI coding tools were used while building the **School
 
 ## 2. Parts of the Project Developed with AI Assistance
 
-1. **Specification Review & Implementation Plan (`ROADMAP_AND_IMPLEMENTATION_GUIDE.md`):**
-   - Cross-checked the original Bengali assignment prompt with the 45-page functional specification to make sure no endpoint paths, headers, or edge cases were missed.
+1. **Specification Review & Functional Architecture:**
+   - Cross-checked the original Bengali assignment prompt with the functional requirements to make sure no endpoint paths, headers, or edge cases were missed.
 2. **Backend API & PostgreSQL Concurrency Layer (`backend/`):**
    - Scaffolded the .NET 10 Web API (`SchoolAdmission.Api`), EF Core `AdmissionDbContext`, entities (`SchoolClass`, `AdmissionHold`), and DTOs.
    - Implemented `AdmissionService.cs` with PostgreSQL transactions, `pg_advisory_xact_lock(hashtext(studentId))`, `SELECT ... FOR UPDATE` row locking, inline lazy expiry, idempotent confirmation, and the Section 4.8 previous-expired visibility filter.
@@ -31,7 +31,7 @@ This document explains how AI coding tools were used while building the **School
    - Converted our initial HTML/CSS prototype (`PototypeHtml/index.html`) into a modular React 18 + TypeScript + Vite + Tailwind CSS application.
    - Built the bilingual (`EN | বাংলা`) dictionary (`translations.ts`), BCN persistence/masking bar (`StudentIdBanner.tsx`), 3-second polling class table (`ClassListPage.tsx`), server-synced countdown page (`HoldCountdownPage.tsx`), student history view (`MyApplicationsPage.tsx`), and admin portal (`AdminPortalPage.tsx` + `AddClassModal.tsx`).
 4. **Automated Test Suites & Docker Setup:**
-   - Wrote 17 backend integration and concurrency tests (`AdmissionIntegrationTests.cs`), 14 frontend Vitest tests, 8 Playwright E2E browser tests (`admission.spec.ts`), and the multi-container `docker-compose.yml` (including the dual-backend setup on ports `8080` and `8081`).
+   - Wrote 17 backend integration and concurrency tests (`AdmissionIntegrationTests.cs`), 15 frontend Vitest tests, 8 Playwright E2E browser tests (`admission.spec.ts`), and the multi-container `docker-compose.yml` (including the dual-backend setup on ports `8080` and `8081`).
 
 ---
 
@@ -91,6 +91,6 @@ AI-generated code had several real bugs during development that would have broke
 ## 5. How Correctness Was Verified
 
 1. **Backend Concurrency & Integration Suite (`dotnet test`):** All 17 xUnit tests pass against a real PostgreSQL 16 database, including concurrent seat booking bursts, same-student parallel requests across classes, and dual-server cross-instance locking.
-2. **Frontend Unit & Component Suite (`npm run test`):** All 14 Vitest tests pass with zero warnings.
+2. **Frontend Unit & Component Suite (`npm run test`):** All 15 Vitest tests pass with zero warnings.
 3. **End-to-End Browser Suite (`npm run test:e2e`):** All 8 Playwright tests pass in Chromium, verifying the full user and admin flows, refresh persistence, mobile responsiveness, and zero console errors/warnings.
 4. **Production Build (`npm run build` & `docker compose up`):** Verified clean TypeScript compilation and full multi-container startup with persistent PostgreSQL storage.
