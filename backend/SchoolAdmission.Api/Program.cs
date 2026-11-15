@@ -9,6 +9,8 @@ using SchoolAdmission.Api.Services;
 // CORS policies, and automatic schema initialization on startup.
 // ============================================================================
 
+LoadDotEnv();
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Register REST API controllers and OpenAPI specification support
@@ -107,12 +109,14 @@ app.Run();
 /// <summary>
 /// Resolves a valid Npgsql connection string from either the <c>DATABASE_URL</c> environment variable
 /// (supporting <c>postgres://</c> URI format) or <c>ConnectionStrings:DefaultConnection</c>.
+/// Automatically configures SSL Mode when connecting to cloud-hosted databases such as Neon.
 /// </summary>
 /// <param name="configuration">The application configuration provider.</param>
 /// <returns>A formatted Npgsql key-value connection string.</returns>
 static string GetPostgresConnectionString(IConfiguration configuration)
 {
     var rawUrl = Environment.GetEnvironmentVariable("DATABASE_URL")
+                 ?? Environment.GetEnvironmentVariable("DATABASE_URL_UNPOOLED")
                  ?? configuration.GetConnectionString("DefaultConnection");
 
     if (string.IsNullOrWhiteSpace(rawUrl))
@@ -127,13 +131,18 @@ static string GetPostgresConnectionString(IConfiguration configuration)
         {
             var uri = new Uri(rawUrl);
             var userInfo = uri.UserInfo.Split(':');
-            var user = userInfo[0];
-            var password = userInfo.Length > 1 ? userInfo[1] : "";
+            var user = Uri.UnescapeDataString(userInfo[0]);
+            var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
             var host = uri.Host;
             var port = uri.Port > 0 ? uri.Port : 5432;
             var database = uri.AbsolutePath.TrimStart('/');
 
-            return $"Host={host};Port={port};Database={database};Username={user};Password={password};Include Error Detail=true";
+            var sslRequired = uri.Query.Contains("sslmode=require", StringComparison.OrdinalIgnoreCase)
+                              || host.EndsWith("neon.tech", StringComparison.OrdinalIgnoreCase);
+
+            var sslPart = sslRequired ? ";SSL Mode=Require;Trust Server Certificate=true" : "";
+
+            return $"Host={host};Port={port};Database={database};Username={user};Password={password};Include Error Detail=true{sslPart}";
         }
         catch
         {
@@ -143,6 +152,43 @@ static string GetPostgresConnectionString(IConfiguration configuration)
     }
 
     return rawUrl;
+}
+
+/// <summary>
+/// Searches the working directory and parent directories for a <c>.env.local</c> or <c>.env</c> file
+/// and populates environment variables that have not already been defined.
+/// </summary>
+static void LoadDotEnv()
+{
+    var current = new DirectoryInfo(Directory.GetCurrentDirectory());
+    while (current != null)
+    {
+        var localEnv = Path.Combine(current.FullName, ".env.local");
+        var baseEnv = Path.Combine(current.FullName, ".env");
+
+        var targetFile = File.Exists(localEnv) ? localEnv : (File.Exists(baseEnv) ? baseEnv : null);
+        if (targetFile != null)
+        {
+            foreach (var line in File.ReadAllLines(targetFile))
+            {
+                var trimmed = line.Trim();
+                if (string.IsNullOrEmpty(trimmed) || trimmed.StartsWith("#")) continue;
+                var eqIdx = trimmed.IndexOf('=');
+                if (eqIdx <= 0) continue;
+
+                var key = trimmed[..eqIdx].Trim();
+                var val = trimmed[(eqIdx + 1)..].Trim().Trim('"', '\'');
+
+                if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(key)))
+                {
+                    Environment.SetEnvironmentVariable(key, val);
+                }
+            }
+            break;
+        }
+
+        current = current.Parent;
+    }
 }
 
 /// <summary>

@@ -46,3 +46,7 @@ Library/
 .mcp.json
 .vscode/mcp.json
 AGENTS.md
+.neon
+neon.ts
+/package.json
+/package-lock.json
