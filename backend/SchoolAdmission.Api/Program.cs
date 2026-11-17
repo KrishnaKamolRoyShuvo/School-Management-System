@@ -74,6 +74,17 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+// Normalize consecutive slashes in request paths (e.g. //classes -> /classes)
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.HasValue && context.Request.Path.Value.Contains("//"))
+    {
+        var cleaned = System.Text.RegularExpressions.Regex.Replace(context.Request.Path.Value, "/+", "/");
+        context.Request.Path = cleaned;
+    }
+    await next();
+});
+
 app.UseCors();
 app.MapControllers();
 
