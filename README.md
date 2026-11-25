@@ -1,8 +1,11 @@
 # 🔑 Admin Dashboard: [http://localhost:5173/admin](http://localhost:5173/admin)
+# 🔑 Render Live Link: [https://school-admission-6bz8.onrender.com/](https://school-admission-6bz8.onrender.com/)
 
 > **Quick Access:**
-> - **Admin Dashboard:** [http://localhost:5173/admin](http://localhost:5173/admin) *(Manage classes, seat quotas, live occupancy, and student hold logs)*
-> - **Student Portal:** [http://localhost:5173/](http://localhost:5173/) *(Browse classes, check availability, book temporary seats, and confirm admission)*
+> - **Render Live Student Portal:** [https://school-admission-6bz8.onrender.com/](https://school-admission-6bz8.onrender.com/)
+> - **Render Live Admin Dashboard:** [https://school-admission-6bz8.onrender.com/admin](https://school-admission-6bz8.onrender.com/admin)
+> - **Local Admin Dashboard:** [http://localhost:5173/admin](http://localhost:5173/admin) *(Manage classes, seat quotas, live occupancy, and student hold logs)*
+> - **Local Student Portal:** [http://localhost:5173/](http://localhost:5173/) *(Browse classes, check availability, book temporary seats, and confirm admission)*
 >
 > *(Note: The `/admin` link is intentionally separated from the public student navbar so applicants only see admission views. All admin API endpoints accept requests without auth headers so automated grading scripts can test `POST /classes` directly.)*
 
